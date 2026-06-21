@@ -1,0 +1,21 @@
+[tool.flet]
+app-id = "com.scenepack.mobile"
+name = "ScenePack"
+product = "ScenePack Mobile Edition"
+version = "1.0.0"
+copyright = "Copyright (C) 2026 ScenePack"
+
+[tool.flet.android]
+# Required for video access and exporting
+permissions = [
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "android.permission.READ_MEDIA_VIDEO"
+]
+# Ensure we include the scenedetect engine and ffmpeg wrapper
+python-packages = [
+    "flet",
+    "scenedetect[opencv]",
+    "imageio-ffmpeg"
+]
+dist = "apk"

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "900813188636",
+    "firebase_url": "https://cfx-scenepack-creator-default-rtdb.firebaseio.com",
+    "project_id": "cfx-scenepack-creator",
+    "storage_bucket": "cfx-scenepack-creator.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:900813188636:android:c691dc37a3415fa79539d9",
+        "android_client_info": {
+          "package_name": "com.example.scenepack_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkrXJxUUNJ_13gM-gFopj-jNUdTd8Q9lE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
