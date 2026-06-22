@@ -54,21 +54,27 @@ class DetectorEngine {
     final List<Map<String, dynamic>> scenes = [];
     try {
       final Directory tempDir = await getTemporaryDirectory();
-      final String thumbPath = "${tempDir.path}/thumbnails";
+      // Use unique session timestamp to completely prevent file locking conflicts and cache collisions
+      final String thumbPath = "${tempDir.path}/thumbnails_${DateTime.now().millisecondsSinceEpoch}";
       
       final Directory thumbsDir = Directory(thumbPath);
-      if (await thumbsDir.exists()) await thumbsDir.delete(recursive: true);
-      await thumbsDir.create();
+      await thumbsDir.create(recursive: true);
 
       final probeSession = await FFprobeKit.getMediaInformation(videoPath);
       final mediaInfo = probeSession.getMediaInformation();
       final double totalDuration = double.tryParse(mediaInfo?.getDuration() ?? "0") ?? 0;
 
+      double aspectRatio = 16 / 9;
       final streams = mediaInfo?.getStreams();
       if (streams != null && streams.isNotEmpty) {
-        final width = streams[0].getWidth() ?? 1280;
-        final height = streams[0].getHeight() ?? 720;
-        onAspectRatio(width / height);
+        try {
+          final width = streams[0].getWidth() ?? 1280;
+          final height = streams[0].getHeight() ?? 720;
+          aspectRatio = width / height;
+          onAspectRatio(aspectRatio);
+        } catch (e) {
+          print("⚠️ Warning: Probing aspect ratio failed: $e");
+        }
       }
 
       // Helper to parse timestamps from FFmpeg showinfo logs
@@ -85,46 +91,21 @@ class DetectorEngine {
         return cuts;
       }
 
-      // PASS 1: Main Cuts (Based on user threshold) - 0% to 35%
+      // SINGLE-PASS: Extract all cuts at the subtle threshold (with scaling & no audio) - 0% to 70%
       FFmpegKitConfig.enableStatisticsCallback((stats) {
         if (totalDuration > 0) {
           final double timeInSeconds = stats.getTime() / 1000.0;
-          final int p = ((timeInSeconds / totalDuration) * 35).toInt();
-          onProgress(p.clamp(0, 35));
-        }
-      });
-      final String cmd1 = "-i \"$videoPath\" -vf \"select='gt(scene,$threshold)',showinfo\" -f null -";
-      final session1 = await FFmpegKit.execute(cmd1);
-      final List<double> pass1Cuts = await parseCuts(session1);
-      FFmpegKitConfig.enableStatisticsCallback(null);
-
-      // PASS 2: Subtle Cuts (Threshold - 0.05) - 35% to 70%
-      FFmpegKitConfig.enableStatisticsCallback((stats) {
-        if (totalDuration > 0) {
-          final double timeInSeconds = stats.getTime() / 1000.0;
-          final int p = 35 + ((timeInSeconds / totalDuration) * 35).toInt();
-          onProgress(p.clamp(35, 70));
+          final int p = ((timeInSeconds / totalDuration) * 70).toInt();
+          onProgress(p.clamp(0, 70));
         }
       });
       final double subtleThreshold = (threshold - 0.05).clamp(0.01, 1.0);
-      final String cmd2 = "-i \"$videoPath\" -vf \"select='gt(scene,$subtleThreshold)',showinfo\" -f null -";
-      final session2 = await FFmpegKit.execute(cmd2);
-      final List<double> pass2Cuts = await parseCuts(session2);
+      final String cmd = "-i \"$videoPath\" -vf \"select='gt(scene,$subtleThreshold)',showinfo\" -f null -";
+      final session = await FFmpegKit.execute(cmd);
+      final List<double> cutPoints = await parseCuts(session);
       FFmpegKitConfig.enableStatisticsCallback(null);
 
-      // MERGE & TEMPORAL STABILITY: Filter out micro-cuts < 0.5s
-      List<double> cutPoints = List.from(pass1Cuts);
-      for (double p2 in pass2Cuts) {
-        bool isClose = false;
-        for (double p1 in pass1Cuts) {
-          if ((p2 - p1).abs() < 0.5) {
-            isClose = true;
-            break;
-          }
-        }
-        if (!isClose) cutPoints.add(p2);
-      }
-      
+      // TEMPORAL STABILITY: Filter out micro-cuts < 0.5s
       cutPoints.sort();
       List<double> finalPoints = [];
       double lastPoint = 0.0;
@@ -136,22 +117,35 @@ class DetectorEngine {
       }
       if (totalDuration > lastPoint) finalPoints.add(totalDuration);
 
+      // Calculate target thumbnail dimensions (max 360px on larger side) to prevent UI thread memory lag/freeze
+      int targetWidth = 360;
+      int targetHeight = 202;
+      if (aspectRatio >= 1.0) {
+        targetWidth = 360;
+        targetHeight = (360 / aspectRatio).round();
+      } else {
+        targetHeight = 360;
+        targetWidth = (360 * aspectRatio).round();
+      }
+      if (targetWidth % 2 != 0) targetWidth++;
+      if (targetHeight % 2 != 0) targetHeight++;
+
       // Phase 3: Thumbnailing (70% - 100%)
       double segmentStart = 0.0;
       for (int i = 0; i < finalPoints.length; i++) {
         double segmentEnd = finalPoints[i];
         double midPoint = (segmentStart + segmentEnd) / 2;
         final String thumbFile = "$thumbPath/scene_${i + 1}.jpg";
-        await FFmpegKit.execute("-ss $midPoint -i \"$videoPath\" -vframes 1 -q:v 2 \"$thumbFile\"");
+        await FFmpegKit.execute("-ss $midPoint -i \"$videoPath\" -vframes 1 -s ${targetWidth}x${targetHeight} -q:v 2 \"$thumbFile\"");
         scenes.add({'id': i, 'start': segmentStart, 'end': segmentEnd, 'thumbnail': thumbFile});
         segmentStart = segmentEnd;
         onProgress(70 + ((i / finalPoints.length) * 30).toInt());
       }
       onProgress(100);
       return scenes;
-    } finally {
-      final Set<String> keepPaths = scenes.map((s) => s['thumbnail'] as String).toSet();
-      await CacheManager.clearDetectionCache(keepPaths: keepPaths);
+    } catch (e, stack) {
+      print("🚨 Error in detectScenes: $e\n$stack");
+      rethrow;
     }
   }
 
@@ -312,53 +306,57 @@ class DetectorEngine {
 }
 
 class CacheManager {
-  /// Safely iterates through getTemporaryDirectory() and deletes only files matching the patterns.
+  /// Safely cleans up the session's temporary files and folders using fast, targeted non-recursive scans.
   static Future<void> clearDetectionCache({Set<String>? keepPaths}) async {
     try {
       final Directory tempDir = await getTemporaryDirectory();
       if (!await tempDir.exists()) return;
 
-      final List<FileSystemEntity> entities = tempDir.listSync(recursive: true);
+      // Scan only the top-level temporary directory non-recursively
+      final List<FileSystemEntity> entities = tempDir.listSync(recursive: false);
       for (final FileSystemEntity entity in entities) {
+        final String path = entity.path;
+        final String name = path.split(Platform.pathSeparator).last;
+
         if (entity is File) {
-          final String path = entity.path;
-          
-          // Skip if this path is marked to keep (like current scene thumbnails)
-          if (keepPaths != null && keepPaths.contains(path)) {
-            continue;
-          }
-
-          final String name = path.split(Platform.pathSeparator).last;
-          bool shouldDelete = false;
-
-          // Match patterns: 'frame_review_', 'thumbnails/', 'captured_frame_'
-          if (name.startsWith('frame_review_') ||
-              name.startsWith('captured_frame_') ||
-              path.contains('${Platform.pathSeparator}thumbnails${Platform.pathSeparator}') ||
-              path.endsWith('${Platform.pathSeparator}thumbnails') ||
-              entity.parent.path.split(Platform.pathSeparator).last == 'thumbnails') {
-            shouldDelete = true;
-          }
-
-          if (shouldDelete) {
+          if (name.startsWith('captured_frame_')) {
             try {
               await entity.delete();
             } catch (_) {}
           }
-        }
-      }
+        } else if (entity is Directory) {
+          if (name.startsWith('frame_review_') || name.startsWith('thumbnails_') || name == 'thumbnails') {
+            // Check if any file inside this directory is in keepPaths
+            bool hasActiveFiles = false;
+            if (keepPaths != null && keepPaths.isNotEmpty) {
+              try {
+                final List<FileSystemEntity> files = entity.listSync(recursive: true);
+                for (var file in files) {
+                  if (keepPaths.contains(file.path)) {
+                    hasActiveFiles = true;
+                    break;
+                  }
+                }
+              } catch (_) {}
+            }
 
-      // Also clean up any empty folders matching the patterns
-      final List<FileSystemEntity> dirs = tempDir.listSync(recursive: true);
-      for (final FileSystemEntity entity in dirs) {
-        if (entity is Directory) {
-          final String name = entity.path.split(Platform.pathSeparator).last;
-          if (name.startsWith('frame_review_') || name == 'thumbnails') {
-            try {
-              if (entity.listSync().isEmpty) {
-                await entity.delete();
-              }
-            } catch (_) {}
+            if (!hasActiveFiles) {
+              try {
+                await entity.delete(recursive: true);
+              } catch (_) {}
+            } else {
+              // If it contains active files, clean up only the inactive files in it
+              try {
+                final List<FileSystemEntity> files = entity.listSync(recursive: false);
+                for (var file in files) {
+                  if (file is File && (keepPaths == null || !keepPaths.contains(file.path))) {
+                    try {
+                      await file.delete();
+                    } catch (_) {}
+                  }
+                }
+              } catch (_) {}
+            }
           }
         }
       }

@@ -97,22 +97,9 @@ class AppNavigator extends StatelessWidget {
                 ),
               ),
             ),
-            // Tech-Grid Background Texture
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.006,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 16,
-                  ),
-                  itemBuilder: (context, index) => Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 0.5),
-                    ),
-                  ),
-                ),
-              ),
+            // Tech-Grid Background Texture (Optimized const RepaintBoundary Grid)
+            const Positioned.fill(
+              child: TechGridBackground(),
             ),
             // Main Content Layer
             SafeArea(
@@ -182,9 +169,17 @@ class AppNavigator extends StatelessWidget {
                   ),
                 ],
               ),
-              IconButton(
-                onPressed: () => state.setStatus("ACCOUNT"),
-                icon: const Icon(Icons.account_circle_outlined, color: Colors.white24, size: 32),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => _showHelpDisclaimer(context),
+                    icon: const Icon(Icons.help_outline_rounded, color: Colors.white24, size: 28),
+                  ),
+                  IconButton(
+                    onPressed: () => state.setStatus("ACCOUNT"),
+                    icon: const Icon(Icons.account_circle_outlined, color: Colors.white24, size: 32),
+                  ),
+                ],
               ),
             ],
           ),
@@ -553,6 +548,82 @@ class AppNavigator extends StatelessWidget {
 
   static void showActivationPortal(BuildContext context, AppState state) {
     launchUrl(Uri.parse("https://www.cfxstudios.in/scp-premium"), mode: LaunchMode.externalApplication);
+  }
+
+  void _showHelpDisclaimer(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.8),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0C0E17).withOpacity(0.85),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF2D55).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFFFF2D55),
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "SUITE DISCLAIMER",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "As scene detection is heavy processing method we recommend to use only for short videos.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF2D55),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    child: const Text("GOT IT", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showTrialExpiredPopup(BuildContext context, AppState state) {
@@ -1196,14 +1267,27 @@ class AppNavigator extends StatelessWidget {
         onPressed: isLocked
             ? () => AppNavigator.showActivationPortal(context, state)
             : () async {
-                state.setStatus("PROCESSING");
-                final scenes = await DetectorEngine.detectScenes(
-                  videoPath: state.videoPath!,
-                  threshold: state.threshold,
-                  onProgress: (p) => state.setProgress(p.toDouble()),
-                  onAspectRatio: (ar) => state.setAspectRatio(ar),
-                );
-                state.setScenes(scenes);
+                try {
+                  state.setStatus("PROCESSING");
+                  final scenes = await DetectorEngine.detectScenes(
+                    videoPath: state.videoPath!,
+                    threshold: state.threshold,
+                    onProgress: (p) => state.setProgress(p.toDouble()),
+                    onAspectRatio: (ar) => state.setAspectRatio(ar),
+                  );
+                  state.setScenes(scenes);
+                } catch (e) {
+                  state.setStatus("PREVIEW");
+                  state.setProgress(0.0);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Error detecting scenes: ${e.toString().split('\n').first}"),
+                        backgroundColor: const Color(0xFFFF2D55),
+                      ),
+                    );
+                  }
+                }
               },
         icon: Icon(isLocked ? Icons.lock_rounded : Icons.radar_rounded),
         label: Text(isLocked ? "UPGRADE TO RUN" : "FIND SCENES", style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
@@ -1404,7 +1488,7 @@ class AppNavigator extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.file(File(state.reviewFrames[index]), fit: BoxFit.cover),
+                      Image.file(File(state.reviewFrames[index]), cacheWidth: 240, fit: BoxFit.cover),
                       if (isSelected)
                         const Center(
                           child: Icon(Icons.check_circle, color: Color(0xFFFF2D55), size: 32),
@@ -1661,7 +1745,7 @@ class AppNavigator extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.file(File(scene['thumbnail']), fit: BoxFit.cover),
+                      Image.file(File(scene['thumbnail']), cacheWidth: 240, fit: BoxFit.cover),
                       // Top Bar Info (Scene Index)
                       Positioned(
                         top: 8, left: 8,
@@ -3796,6 +3880,32 @@ class _EliteControlsOverlayState extends State<_EliteControlsOverlay> {
     return IconButton(
       icon: Icon(icon, color: Colors.white, size: 32),
       onPressed: onTap,
+    );
+  }
+}
+
+/// Optimized Tech-Grid Background with constant RepaintBoundary to eliminate rebuild overhead
+class TechGridBackground extends StatelessWidget {
+  const TechGridBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 16,
+        ),
+        itemCount: 256, // Cap layout count to prevent infinite cell layouts
+        itemBuilder: (context, index) => Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.white.withOpacity(0.006),
+              width: 0.5,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
