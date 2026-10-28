@@ -2137,7 +2137,13 @@ class AppNavigator extends StatelessWidget {
               ],
             ),
             child: ElevatedButton(
-              onPressed: () => state.setStatus("CLIPS"),
+              onPressed: () async {
+                if (state.autoClearCache) {
+                  await CacheManager.clearDetectionCache(keepPaths: state.lastExportedPaths.toSet());
+                  await state.refreshCacheSize();
+                }
+                state.setStatus("CLIPS");
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 foregroundColor: Colors.white,
@@ -3285,9 +3291,63 @@ class AccountPage extends StatelessWidget {
   }
 }
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final AppState state;
   const SettingsPage({super.key, required this.state});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  AppState get state => widget.state;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      state.refreshCacheSize();
+    });
+  }
+
+  void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF1A1D24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: (isError ? const Color(0xFFFF3B30) : const Color(0xFF10B981)).withOpacity(0.3)),
+        ),
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: (isError ? const Color(0xFFFF3B30) : const Color(0xFF10B981)).withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isError ? Icons.close_rounded : Icons.check_rounded,
+                color: isError ? const Color(0xFFFF3B30) : const Color(0xFF10B981),
+                size: 14,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildSectionHeader(String label, IconData icon, Color color) {
     return Row(
@@ -3349,6 +3409,123 @@ class SettingsPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSwitchTile(
+    IconData icon,
+    String title,
+    String sub,
+    bool value,
+    ValueChanged<bool> onChanged, {
+    Color color = Colors.white24,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: color.withOpacity(0.15), width: 1),
+            ),
+            child: Icon(icon, color: color == Colors.white24 ? Colors.white38 : color, size: 17),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                const SizedBox(height: 3),
+                Text(sub, style: const TextStyle(color: Colors.white38, fontSize: 10, height: 1.3)),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            activeColor: const Color(0xFFFF3B30),
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmAndClearAllCache(BuildContext context, AppState state) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161824),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_sweep_rounded, color: Color(0xFFFF3B30), size: 24),
+            SizedBox(width: 10),
+            Text("PURGE ALL CACHE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1)),
+          ],
+        ),
+        content: Text(
+          "This will purge ${state.cacheSizeFormatted} of temporary cached videos, thumbnails, and preview sessions to free up phone storage.\n\nClips already saved to your Photos album or Files will not be affected.",
+          style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("CANCEL", style: TextStyle(color: Colors.white38, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF3B30),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (dCtx) => Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B1F27),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.04)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF3B30))),
+                        SizedBox(width: 20),
+                        Text("Reclaiming storage...", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+
+              try {
+                final int freedBytes = await state.clearAllCache();
+                final String freedStr = CacheManager.formatBytes(freedBytes);
+                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) {
+                  _showSnackBar(context, "FREED $freedStr OF DEVICE STORAGE");
+                }
+              } catch (e) {
+                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) {
+                  _showSnackBar(context, "ERROR PURGING CACHE: $e", isError: true);
+                }
+              }
+            },
+            child: const Text("PURGE ALL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -3626,105 +3803,6 @@ class SettingsPage extends StatelessWidget {
               color: state.hasUpdateNotification ? const Color(0xFFFF3B30) : Colors.white24,
             ),
             _buildSettingsTile(
-              Icons.delete_sweep_rounded,
-              "CLEAN CACHE",
-              "Clear review frames, thumbnails, and captures",
-              () async {
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (BuildContext context) {
-                    return Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1B1F27),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withOpacity(0.02)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF3B30))),
-                            SizedBox(width: 20),
-                            Text("Clearing cache...", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-
-                try {
-                  await CacheManager.clearDetectionCache();
-                  if (context.mounted) Navigator.pop(context);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.12), shape: BoxShape.circle),
-                              child: const Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 14),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                "CACHE CLEARED SUCCESSFULLY", 
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF1B1F27),
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.all(20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: const Color(0xFFFF3B30).withOpacity(0.35), width: 1),
-                        ),
-                        elevation: 6,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) Navigator.pop(context);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(color: const Color(0xFFFF3B30).withOpacity(0.12), shape: BoxShape.circle),
-                              child: const Icon(Icons.close_rounded, color: Color(0xFFFF3B30), size: 14),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                "FAILED TO CLEAR CACHE: $e".toUpperCase(), 
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF1B1F27),
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.all(20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: const Color(0xFFFF3B30).withOpacity(0.35), width: 1),
-                        ),
-                        elevation: 6,
-                      ),
-                    );
-                  }
-                }
-              },
-              color: const Color(0xFFFF3B30),
-            ),
-            _buildSettingsTile(
               Icons.menu_book_rounded,
               "WORKSTATION GUIDE",
               "Learn how to configure scene detection thresholds",
@@ -3748,6 +3826,40 @@ class SettingsPage extends StatelessWidget {
                 },
                 color: Colors.white24,
               ),
+          ]),
+          const SizedBox(height: 28),
+
+          // ── Storage & Cache Management ────────────────────
+          _buildSectionHeader("STORAGE & CACHE", Icons.storage_rounded, const Color(0xFF10B981)),
+          const SizedBox(height: 12),
+          _buildSettingsCard([
+            _buildSettingsTile(
+              Icons.delete_sweep_rounded,
+              "PURGE ALL CACHE (${state.cacheSizeFormatted})",
+              "Clears temporary videos, thumbnails, and preview cache",
+              () => _confirmAndClearAllCache(context, state),
+              color: const Color(0xFFFF3B30),
+            ),
+            _buildSettingsSwitchTile(
+              Icons.auto_delete_rounded,
+              "AUTO-CLEAR AFTER EXPORTS",
+              "Frees temporary staged files automatically after exporting",
+              state.autoClearCache,
+              (val) => state.setAutoClearCache(val),
+              color: const Color(0xFF10B981),
+            ),
+            _buildSettingsTile(
+              Icons.refresh_rounded,
+              "RECALCULATE CACHE",
+              "Current temporary usage: ${state.cacheSizeFormatted}",
+              () async {
+                await state.refreshCacheSize();
+                if (context.mounted) {
+                  _showSnackBar(context, "CACHE USAGE: ${state.cacheSizeFormatted}");
+                }
+              },
+              color: const Color(0xFF3B82F6),
+            ),
           ]),
           const SizedBox(height: 28),
 

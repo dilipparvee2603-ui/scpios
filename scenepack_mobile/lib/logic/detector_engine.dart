@@ -404,12 +404,73 @@ class DetectorEngine {
 }
 
 class CacheManager {
-  /// Clears ALL temporary files the app generates:
-  ///   • thumbnails_* folders   (scene detection thumbnails)
+  /// Calculates the total size of all temporary/cached files in bytes.
+  static Future<int> getTotalCacheSizeBytes() async {
+    int totalBytes = 0;
+    try {
+      final Directory tempDir = await getTemporaryDirectory();
+      if (await tempDir.exists()) {
+        final List<FileSystemEntity> entities = tempDir.listSync(recursive: true);
+        for (final FileSystemEntity entity in entities) {
+          if (entity is File) {
+            try {
+              totalBytes += await entity.length();
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      DetectorEngine._log("Error calculating cache size: $e");
+    }
+    return totalBytes;
+  }
+
+  /// Formats bytes into a human-readable string (e.g. "124.5 MB" or "1.8 GB")
+  static String formatBytes(int bytes) {
+    if (bytes <= 0) return "0.0 MB";
+    const int kb = 1024;
+    const int mb = kb * 1024;
+    const int gb = mb * 1024;
+    if (bytes >= gb) {
+      return "${(bytes / gb).toStringAsFixed(2)} GB";
+    } else {
+      return "${(bytes / mb).toStringAsFixed(1)} MB";
+    }
+  }
+
+  /// Clears 100% of temporary files:
+  ///   • file_picker imported videos (which can be several GBs)
+  ///   • thumbnails_* folders (scene detection thumbnails)
   ///   • frame_review_* folders (frame extraction preview sessions)
-  ///   • production_clips/      (exported clip staging area)
+  ///   • production_clips/ (exported clip staging area)
   ///   • captured_frame_* files (single captured frames)
-  ///   • update.apk             (downloaded app update)
+  ///   • FFmpegKit session logs and caches
+  static Future<int> clearAllCache() async {
+    int bytesFreed = await getTotalCacheSizeBytes();
+    try {
+      final Directory tempDir = await getTemporaryDirectory();
+      if (await tempDir.exists()) {
+        final List<FileSystemEntity> entities = tempDir.listSync(recursive: false);
+        for (final FileSystemEntity entity in entities) {
+          try {
+            if (entity is File) {
+              await entity.delete();
+            } else if (entity is Directory) {
+              await entity.delete(recursive: true);
+            }
+          } catch (e) {
+            DetectorEngine._log("Could not delete ${entity.path}: $e");
+          }
+        }
+      }
+      await FFmpegKitConfig.clearSessions();
+    } catch (e) {
+      DetectorEngine._log("Error clearing all cache: $e");
+    }
+    return bytesFreed;
+  }
+
+  /// Clears temporary detection cache respecting active session files
   static Future<void> clearDetectionCache({Set<String>? keepPaths}) async {
     try {
       final Directory tempDir = await getTemporaryDirectory();
@@ -469,26 +530,7 @@ class CacheManager {
 
   /// Returns true if the temporary folder exceeds 500MB.
   static Future<bool> isCacheTooLarge() async {
-    try {
-      final Directory tempDir = await getTemporaryDirectory();
-      if (!await tempDir.exists()) return false;
-
-      int totalSize = 0;
-      final List<FileSystemEntity> entities = tempDir.listSync(recursive: true);
-      for (final FileSystemEntity entity in entities) {
-        if (entity is File) {
-          try {
-            totalSize += await entity.length();
-          } catch (_) {}
-        }
-      }
-
-      // 500MB = 500 * 1024 * 1024 bytes
-      const int limit = 500 * 1024 * 1024;
-      return totalSize > limit;
-    } catch (e) {
-      DetectorEngine._log("Error checking cache size: $e");
-      return false;
-    }
+    final int size = await getTotalCacheSizeBytes();
+    return size > 500 * 1024 * 1024;
   }
 }

@@ -832,6 +832,30 @@ class AppState extends ChangeNotifier {
   bool isHomeLoading = true;
   bool hasShownTrialExpiredDialog = false;
 
+  // Storage & Cache Optimization
+  bool autoClearCache = true;
+  String cacheSizeFormatted = "0.0 MB";
+  int cacheSizeBytes = 0;
+
+  Future<void> refreshCacheSize() async {
+    cacheSizeBytes = await CacheManager.getTotalCacheSizeBytes();
+    cacheSizeFormatted = CacheManager.formatBytes(cacheSizeBytes);
+    notifyListeners();
+  }
+
+  Future<int> clearAllCache() async {
+    final freedBytes = await CacheManager.clearAllCache();
+    await refreshCacheSize();
+    notifyListeners();
+    return freedBytes;
+  }
+
+  Future<void> setAutoClearCache(bool enabled) async {
+    autoClearCache = enabled;
+    await prefs.setBool('auto_clear_cache', enabled);
+    notifyListeners();
+  }
+
   void setHasShownTrialExpiredDialog(bool val) {
     hasShownTrialExpiredDialog = val;
     notifyListeners();
@@ -846,6 +870,8 @@ class AppState extends ChangeNotifier {
     appVersion = "v${packageInfo.version}";
     
     cloudFolderName = prefs.getString('cloud_folder_name') ?? "CFX_SCP_SYNC";
+    autoClearCache = prefs.getBool('auto_clear_cache') ?? true;
+    unawaited(refreshCacheSize());
     await _loadUsage();
     
     final sessionStr = prefs.getString('supabase_session');
