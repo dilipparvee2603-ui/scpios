@@ -12,20 +12,14 @@ cd "$(dirname "$0")"
 echo "[1/4] Resolving Flutter dependencies..."
 flutter pub get
 
-# 2. CocoaPods setup
-echo "[2/4] Installing CocoaPods..."
-cd ios
-pod install
-cd ..
+# 2. Build iOS Release Application
+echo "[2/4] Building iOS Release App (No Code Signing Required)..."
+flutter build ios --release --no-codesign
 
-# 3. Build IPA
-echo "[3/4] Building iOS Release Archive..."
-flutter build ipa --release --no-codesign
-
-# 4. Package IPA
-echo "[4/4] Packaging .ipa file..."
+# 3. Package IPA
+echo "[3/4] Packaging .ipa file..."
 mkdir -p build/ios/ipa/Payload
-cp -r build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/ipa/Payload/
+cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
 cd build/ios/ipa
 zip -r -q ScenePack-Pro.ipa Payload
 rm -rf Payload
@@ -35,5 +29,5 @@ echo ""
 echo "--------------------------------------------------"
 echo "[SUCCESS] IPA GENERATED!"
 echo "LOCATION: build/ios/ipa/ScenePack-Pro.ipa"
-echo "You can sideload this IPA via AltStore, Sideloadly, or Scarlet."
+echo "You can sideload this IPA via Sideloadly, AltStore, or Scarlet."
 echo "--------------------------------------------------"

@@ -38,14 +38,14 @@ jobs:
       - name: Install Flutter Dependencies
         run: flutter pub get
 
-      - name: Build iOS Archive (Unsigned)
+      - name: Build iOS Application (Unsigned)
         run: |
-          flutter build ipa --release --no-codesign
+          flutter build ios --release --no-codesign
 
       - name: Package IPA (Payload Archive)
         run: |
           mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/ipa/Payload/
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r -q ScenePack-iOS.ipa Payload
           rm -rf Payload
@@ -70,14 +70,15 @@ jobs:
             This is the production `.ipa` package for iPhone and iPad.
             
             #### Features Included:
+            - **Storage & Cache Management**: Clear all temporary 4K videos, thumbnails, and preview caches on demand + auto-clear after exports.
+            - **Optimized 4K Scene Detection**: Ultra-fast 360p bilinear scaling and keyframe thumbnails (~15s detection).
             - **Photos & Camera Roll Access**: Native video import and direct export to Photos albums.
             - **Files & Documents Access**: Import MKV/MP4/MOV from Files & iCloud Drive, and save directly to Files or share via Share Sheet.
             - **Apple Silicon Hardware Acceleration**: Powered by native `h264_videotoolbox` encoder.
-            - **High Precision Scene Detection**: Auto frame difference cuts with 0.5s stability floor.
             
             #### How to Install on iOS:
             1. Download `ScenePack-iOS.ipa` below.
-            2. Sideload onto your iPhone using **AltStore**, **Sideloadly**, **Scarlet**, or **TrollStore**.
+            2. Sideload onto your iPhone using **Sideloadly**, **AltStore**, **Scarlet**, or **TrollStore**.
           files: scenepack_mobile/build/ios/ipa/ScenePack-iOS.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
