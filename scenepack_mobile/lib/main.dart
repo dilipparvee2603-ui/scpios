@@ -8,6 +8,7 @@ import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:gal/gal.dart';
 import 'dart:io';
+import 'dart:async';
 import 'logic/detector_engine.dart';
 import 'logic/supabase_service.dart';
 import 'screens/app_navigator.dart';
