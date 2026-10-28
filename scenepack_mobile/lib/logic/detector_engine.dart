@@ -46,7 +46,7 @@ class DetectorEngine {
     await packDir.create(recursive: true);
 
     final double duration = endTime - startTime;
-    final String proCommand = "-ss $startTime -t $duration -i \"$videoPath\" -vf \"fps=$fps,scale=720:-1\" -q:v 2 \"$exportPath/frame_%04d.jpg\"";
+    final String proCommand = "-ss $startTime -t $duration -an -sn -dn -i \"$videoPath\" -vf \"fps=$fps,scale=720:-2:flags=fast_bilinear\" -q:v 2 \"$exportPath/frame_%04d.jpg\"";
     
     _log("📸 FRAME EXTRACTION FOR REVIEW: $proCommand");
     
@@ -112,7 +112,7 @@ class DetectorEngine {
         return cuts;
       }
 
-      // SINGLE-PASS: Extract all cuts at the subtle threshold (with scaling & no audio) - 0% to 70%
+      // SINGLE-PASS: Extract all cuts with fast 360p scaling and no audio/subtitles - 0% to 70%
       FFmpegKitConfig.enableStatisticsCallback((stats) {
         if (totalDuration > 0) {
           final double timeInSeconds = stats.getTime() / 1000.0;
@@ -121,7 +121,8 @@ class DetectorEngine {
         }
       });
       final double subtleThreshold = (threshold - 0.05).clamp(0.01, 1.0);
-      final String cmd = "-i \"$videoPath\" -vf \"select='gt(scene,$subtleThreshold)',showinfo\" -f null -";
+      // Downscale stream to 360p with fast_bilinear to eliminate 36x redundant pixel decoding on 4K files
+      final String cmd = "-an -sn -dn -i \"$videoPath\" -vf \"scale=360:-2:flags=fast_bilinear,select='gt(scene,$subtleThreshold)',showinfo\" -f null -";
       final session = await FFmpegKit.execute(cmd);
       final List<double> cutPoints = await parseCuts(session);
       FFmpegKitConfig.enableStatisticsCallback(null);
@@ -151,16 +152,47 @@ class DetectorEngine {
       if (targetWidth % 2 != 0) targetWidth++;
       if (targetHeight % 2 != 0) targetHeight++;
 
-      // Phase 3: Thumbnailing (70% - 100%)
+      // Phase 3: High-Speed Thumbnailing (70% - 100%)
       double segmentStart = 0.0;
+      final List<Map<String, dynamic>> sceneMeta = [];
       for (int i = 0; i < finalPoints.length; i++) {
         double segmentEnd = finalPoints[i];
         double midPoint = (segmentStart + segmentEnd) / 2;
         final String thumbFile = "$thumbPath/scene_${i + 1}.jpg";
-        await FFmpegKit.execute("-ss $midPoint -i \"$videoPath\" -vframes 1 -s ${targetWidth}x${targetHeight} -q:v 2 \"$thumbFile\"");
-        scenes.add({'id': i, 'start': segmentStart, 'end': segmentEnd, 'thumbnail': thumbFile});
+        sceneMeta.add({
+          'id': i,
+          'start': segmentStart,
+          'end': segmentEnd,
+          'midPoint': midPoint,
+          'thumbFile': thumbFile,
+        });
         segmentStart = segmentEnd;
-        onProgress(70 + ((i / finalPoints.length) * 30).toInt());
+      }
+
+      int completedThumbs = 0;
+      for (var meta in sceneMeta) {
+        final double midPoint = meta['midPoint'];
+        final String thumbFile = meta['thumbFile'];
+        
+        // Fast keyframe seek without decoding intermediate GOP frames
+        final String thumbCmd = "-ss $midPoint -noaccurate_seek -an -sn -dn -i \"$videoPath\" "
+            "-frames:v 1 -vf \"scale=$targetWidth:$targetHeight:flags=fast_bilinear\" -q:v 3 \"$thumbFile\"";
+        await FFmpegKit.execute(thumbCmd);
+
+        // Fallback if fast seek did not yield a frame
+        if (!File(thumbFile).existsSync()) {
+          await FFmpegKit.execute("-ss $midPoint -an -sn -dn -i \"$videoPath\" -vframes 1 -s $targetWidth" "x$targetHeight -q:v 3 \"$thumbFile\"");
+        }
+
+        scenes.add({
+          'id': meta['id'],
+          'start': meta['start'],
+          'end': meta['end'],
+          'thumbnail': thumbFile,
+        });
+        
+        completedThumbs++;
+        onProgress(70 + ((completedThumbs / sceneMeta.length) * 30).toInt());
       }
       onProgress(100);
       return scenes;
