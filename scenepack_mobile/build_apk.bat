@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
-set "JAVA_HOME=C:\Users\Dilipkumar\.jdks\jbr-17.0.14"
+set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
 set "PATH=%JAVA_HOME%\bin;%PATH%"
-cd /d "d:\app\scenepack_mobile"
+cd /d "%~dp0"
 
 echo --------------------------------------------------
 echo [CFX STUDIOS] BUILD CONTROLLER v2.2 (DEBUG MODE)
@@ -22,7 +22,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content lib/main.da
 echo [3/3] INITIATING PRODUCTION BUILD...
 echo --------------------------------------------------
 
-call C:\flutter\bin\flutter.bat build apk --split-per-abi
+call "%~dp0src\flutter\bin\flutter.bat" build apk --split-per-abi
 
 if %ERRORLEVEL% EQU 0 (
     echo.

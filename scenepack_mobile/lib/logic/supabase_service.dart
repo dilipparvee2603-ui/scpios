@@ -10,7 +10,7 @@ class SupabaseService {
       'apikey': _key,
       'Content-Type': 'application/json',
     };
-    if (bearer != null) {
+    if (bearer != null && bearer.isNotEmpty) {
       headers['Authorization'] = 'Bearer $bearer';
     }
     return headers;
@@ -102,7 +102,8 @@ class SupabaseService {
   }
 
   // create profile (if it does not exist)
-  static Future<void> createProfile(String userId, String email, String accessToken) async {
+  // create profile (if it does not exist)
+  static Future<void> createProfile(String userId, String email, String? hwid, String accessToken) async {
     try {
       await http.post(
         Uri.parse("$_url/rest/v1/profiles"),
@@ -114,6 +115,7 @@ class SupabaseService {
           'id': userId,
           'email': email,
           'is_premium': false,
+          'hardware_id': hwid,
         }),
       );
     } catch (e) {
@@ -135,6 +137,24 @@ class SupabaseService {
     } catch (e) {
       return false;
     }
+  }
+
+  // check if device has other user registered
+  static Future<bool> checkDeviceHasOtherUser(String hwid, String? userId) async {
+    try {
+      final encodedHwid = Uri.encodeComponent(hwid);
+      final response = await http.get(
+        Uri.parse("$_url/rest/v1/profiles?hardware_id=eq.$encodedHwid&id=neq.$userId"),
+        headers: _headers(),
+      );
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List;
+        return list.isNotEmpty;
+      }
+    } catch (e) {
+      // Ignored
+    }
+    return false;
   }
 
   // check pending payment requests
@@ -197,5 +217,43 @@ class SupabaseService {
     } catch (e) {
       return {'status': 'error', 'message': e.toString()};
     }
+  }
+
+  // check if email is temporary/disposable
+  static Future<bool> isDisposableEmail(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.contains('@')) return false;
+    final domain = cleanEmail.split('@').last.trim();
+    
+    // Top common disposable email domains
+    const commonDisposableDomains = {
+      '10minutemail.com', 'tempmail.com', 'yopmail.com', 'guerrillamail.com',
+      'guerrillamailblock.com', 'guerrillamail.net', 'guerrillamail.org',
+      'guerrillamail.biz', 'sharklasers.com', 'grr.la', 'pokemail.net',
+      'dispostable.com', 'mailinator.com', 'maildrop.cc', 'getairmail.com',
+      'throwawaymail.com', 'tempmailaddress.com', 'boun.cr', 'mailcatch.com',
+      'mailnesia.com', 'mintemail.com', 'spambox.us', 'mytrashmail.com',
+      'trashmail.com', 'temp-mail.org', 'emailondeck.com', 'crazymailing.com',
+      'owlymail.com', 'generator.email', 'tempmail.net'
+    };
+    
+    if (commonDisposableDomains.contains(domain)) {
+      return true;
+    }
+    
+    // Dynamic public API check with a 2-second timeout
+    try {
+      final response = await http.get(
+        Uri.parse("https://disposable.debounce.io/?email=$cleanEmail"),
+      ).timeout(const Duration(seconds: 2));
+      
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        return body['disposable'] == 'true' || body['disposable'] == true;
+      }
+    } catch (_) {
+      // Gracefully fallback to allow signup if API is down
+    }
+    return false;
   }
 }

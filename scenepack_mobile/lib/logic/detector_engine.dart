@@ -7,7 +7,28 @@ import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:gal/gal.dart';
 
+class ClipExportTask {
+  final double start;
+  final double end;
+  final String outputPath;
+
+  ClipExportTask({
+    required this.start,
+    required this.end,
+    required this.outputPath,
+  });
+}
+
 class DetectorEngine {
+  static void Function(String)? logCallback;
+  static void _log(String msg) {
+    if (logCallback != null) {
+      logCallback!(msg);
+    } else {
+      print(msg);
+    }
+  }
+
   /// Batch Frame Extraction for Review.
   /// Extracts frames to a temp folder and returns the list of file paths.
   /// Does NOT save to gallery yet (User will select).
@@ -27,7 +48,7 @@ class DetectorEngine {
     final double duration = endTime - startTime;
     final String proCommand = "-ss $startTime -t $duration -i \"$videoPath\" -vf \"fps=$fps,scale=720:-1\" -q:v 2 \"$exportPath/frame_%04d.jpg\"";
     
-    print("📸 FRAME EXTRACTION FOR REVIEW: $proCommand");
+    _log("📸 FRAME EXTRACTION FOR REVIEW: $proCommand");
     
     final session = await FFmpegKit.execute(proCommand);
     final returnCode = await session.getReturnCode();
@@ -73,7 +94,7 @@ class DetectorEngine {
           aspectRatio = width / height;
           onAspectRatio(aspectRatio);
         } catch (e) {
-          print("⚠️ Warning: Probing aspect ratio failed: $e");
+          _log("⚠️ Warning: Probing aspect ratio failed: $e");
         }
       }
 
@@ -144,9 +165,138 @@ class DetectorEngine {
       onProgress(100);
       return scenes;
     } catch (e, stack) {
-      print("🚨 Error in detectScenes: $e\n$stack");
+      _log("🚨 Error in detectScenes: $e\n$stack");
       rethrow;
     }
+  }
+
+  static String get _hwEncoder => Platform.isIOS ? 'h264_videotoolbox' : 'h264_mediacodec';
+
+  /// Fast compatibility check for hardware acceleration on the input video.
+  static Future<bool> checkHardwareSupport(String input) async {
+    // Run a quick 1-frame dry run encoding test using platform hardware encoder
+    // Writing to a null muxer avoids actual file write overhead.
+    final String encoder = _hwEncoder;
+    final String testCommand = "-y -ss 0 -t 0.05 -i \"$input\" -c:v $encoder -b:v 8M -profile:v baseline -an -f null -";
+    await FFmpegKitConfig.clearSessions();
+    final session = await FFmpegKit.execute(testCommand);
+    final returnCode = await session.getReturnCode();
+    final success = ReturnCode.isSuccess(returnCode);
+    if (!success) {
+      final logs = await session.getAllLogsAsString() ?? '';
+      _log("⚠️ [Hardware Check] Compatibility test failed for $encoder on this device/resolution.\nLogs:\n$logs");
+    } else {
+      _log("✅ [Hardware Check] Hardware encoder ($encoder) successfully initialized for this resolution.");
+    }
+    return success;
+  }
+
+  /// High-Performance Batch Clip Exporter.
+  /// Runs all exports in a single FFmpeg execution session.
+  static Future<List<String>> exportClips({
+    required String input,
+    required List<ClipExportTask> tasks,
+    required int crfValue,
+    bool muteAudio = false,
+    bool useHardwareAcceleration = false,
+    Function(double)? onProgress,
+  }) async {
+    if (tasks.isEmpty) return [];
+
+    // Ensure parent directories exist
+    for (var task in tasks) {
+      final File outFile = File(task.outputPath);
+      if (!await outFile.parent.exists()) {
+        await outFile.parent.create(recursive: true);
+      }
+    }
+
+    // Check hardware support once at the beginning
+    bool hardwareSupported = false;
+    if (useHardwareAcceleration) {
+      hardwareSupported = await checkHardwareSupport(input);
+    }
+
+    final List<String> results = [];
+    final double totalDuration = tasks.fold(0.0, (sum, task) => sum + (task.end - task.start));
+    double completedDuration = 0.0;
+
+    for (int i = 0; i < tasks.length; i++) {
+      final task = tasks[i];
+      final double duration = task.end - task.start;
+
+      // Setup statistics callback for the current task
+      if (onProgress != null) {
+        FFmpegKitConfig.enableStatisticsCallback((stats) {
+          if (totalDuration > 0) {
+            final double timeInSeconds = stats.getTime() / 1000.0;
+            final double progressFraction = (completedDuration + timeInSeconds).clamp(0.0, totalDuration);
+            final double p = progressFraction / totalDuration;
+            onProgress(p);
+          }
+        });
+      }
+
+      try {
+        String buildCommand(bool useHw) {
+          final String audioCommand = muteAudio ? "-an" : "-map 0:a:0? -c:a copy";
+          
+          String videoParams;
+          if (useHw) {
+            final String encoder = _hwEncoder;
+            videoParams = "-c:v $encoder -b:v 8M -profile:v baseline";
+          } else {
+            // For software fallback on mobile, use a faster preset (e.g. superfast) to prevent OOM / heat
+            String preset = "superfast";
+            String codec = "libx264";
+            if (crfValue == 0) {
+              preset = "veryfast";
+            }
+            videoParams = "-c:v $codec -crf $crfValue -preset $preset";
+          }
+
+          return "-y -ss ${task.start} -t $duration -i \"$input\" "
+                 "-map 0:v:0 $videoParams -pix_fmt yuv420p $audioCommand \"${task.outputPath}\"";
+        }
+
+        final String mainCommand = buildCommand(hardwareSupported);
+        _log("🚀 EXPORTING CLIP (${i + 1}/${tasks.length}): $mainCommand");
+
+        await FFmpegKitConfig.clearSessions();
+        var session = await FFmpegKit.execute(mainCommand);
+        var returnCode = await session.getReturnCode();
+
+        // Fallback to software encoding if hardware encoding fails
+        if (!ReturnCode.isSuccess(returnCode) && hardwareSupported) {
+          final String hwLogs = await session.getAllLogsAsString() ?? '';
+          _log("⚠️ HARDWARE ACCELERATION FAILED for clip ${i + 1}. Falling back to software encoding (libx264).\nLogs:\n$hwLogs");
+
+          final String fallbackCommand = buildCommand(false);
+          _log("🚀 FALLBACK EXPORT START: $fallbackCommand");
+
+          await FFmpegKitConfig.clearSessions();
+          session = await FFmpegKit.execute(fallbackCommand);
+          returnCode = await session.getReturnCode();
+        }
+
+        if (!ReturnCode.isSuccess(returnCode)) {
+          final String failLogs = await session.getAllLogsAsString() ?? '';
+          _log("❌ FFmpeg Export Failed for clip ${i + 1}. Logs:\n$failLogs");
+          throw Exception("FFmpeg Export Failed: $failLogs");
+        }
+
+        results.add(task.outputPath);
+        completedDuration += duration;
+
+      } finally {
+        if (onProgress != null) {
+          FFmpegKitConfig.enableStatisticsCallback(null);
+        }
+        await FFmpegKitConfig.clearSessions();
+      }
+    }
+
+    return results;
   }
 
   /// Clinical Clip Export
@@ -160,99 +310,15 @@ class DetectorEngine {
     bool useHardwareAcceleration = false,
     Function(double)? onProgress,
   }) async {
-    final File outFile = File(output);
-    if (!await outFile.parent.exists()) await outFile.parent.create(recursive: true);
-    
-    final double duration = end - start;
-    if (onProgress != null) {
-      FFmpegKitConfig.enableStatisticsCallback((stats) {
-        if (duration > 0) {
-          final double timeInSeconds = stats.getTime() / 1000.0;
-          final double p = (timeInSeconds / duration).clamp(0.0, 1.0);
-          onProgress(p);
-        }
-      });
-    }
-
-    try {
-      final String audioCommand = muteAudio ? "-an" : "-c:a aac";
-      
-      String videoParams;
-      if (useHardwareAcceleration) {
-        // Switch to Android hardware accelerated H.264 MediaCodec encoding
-        videoParams = "-c:v h264_mediacodec -b:v 8M";
-      } else {
-        // Elite 3-Tier Encoder Chassis (Standard libx264 software encoding)
-        String preset = "medium";
-        String codec = "libx264";
-        String extraParams = "";
-
-        if (crfValue == 0) {
-          // LOSSLESS TRUE: Master Archiving (H.264 CRF 0 is mathematically perfect)
-          codec = "libx264";
-          preset = "slow";
-          extraParams = ""; 
-        } else if (crfValue <= 16) {
-          // ELITE: Professional Delivery
-          codec = "libx264";
-          preset = "slow";
-        } else {
-          // BALANCED: Standard Efficiency
-          codec = "libx264";
-          preset = "medium";
-        }
-        videoParams = "-c:v $codec -crf $crfValue -preset $preset $extraParams";
-      }
-
-      final String command = "-y -ss $start -t $duration -i \"$input\" "
-                             "$videoParams "
-                             "-pix_fmt yuv420p -movflags +faststart "
-                             "$audioCommand \"$output\"";
-      
-      // Clean up previous sessions to avoid memory leak build-up
-      await FFmpegKitConfig.clearSessions();
-
-      var session = await FFmpegKit.execute(command);
-      var returnCode = await session.getReturnCode();
-
-      if (!ReturnCode.isSuccess(returnCode) && useHardwareAcceleration) {
-        final String hwLogs = await session.getAllLogsAsString() ?? '';
-        print("⚠️ HARDWARE ACCELERATION FAILED (mediacodec). Falling back to software encoding (libx264). Logs:\n$hwLogs");
-
-        // Software fallback parameters
-        String fallbackPreset = "medium";
-        String fallbackCodec = "libx264";
-        String fallbackExtraParams = "";
-
-        if (crfValue == 0) {
-          fallbackPreset = "slow";
-        } else if (crfValue <= 16) {
-          fallbackPreset = "slow";
-        }
-
-        final String fallbackVideoParams = "-c:v $fallbackCodec -crf $crfValue -preset $fallbackPreset $fallbackExtraParams";
-        final String fallbackCommand = "-y -ss $start -t $duration -i \"$input\" "
-                                       "$fallbackVideoParams "
-                                       "-pix_fmt yuv420p -movflags +faststart "
-                                       "$audioCommand \"$output\"";
-
-        await FFmpegKitConfig.clearSessions();
-        session = await FFmpegKit.execute(fallbackCommand);
-        returnCode = await session.getReturnCode();
-      }
-
-      if (ReturnCode.isSuccess(returnCode)) return output;
-
-      final String failLogs = await session.getAllLogsAsString() ?? '';
-      print("❌ FFmpeg Export Failed. Logs:\n$failLogs");
-      throw Exception("FFmpeg Export Failed: $failLogs");
-    } finally {
-      if (onProgress != null) {
-        FFmpegKitConfig.enableStatisticsCallback(null);
-      }
-      // Clear sessions from memory to avoid leakage
-      await FFmpegKitConfig.clearSessions();
-    }
+    final results = await exportClips(
+      input: input,
+      tasks: [ClipExportTask(start: start, end: end, outputPath: output)],
+      crfValue: crfValue,
+      muteAudio: muteAudio,
+      useHardwareAcceleration: useHardwareAcceleration,
+      onProgress: onProgress,
+    );
+    return results.first;
   }
 
   /// Professional Frame Capture
@@ -280,7 +346,7 @@ class DetectorEngine {
     int cuts = 0;
     final String cmd = "-ss $startTime -t $probeDuration -i \"$videoPath\" -vf \"select='gt(scene,0.1)',showinfo\" -f null -";
     
-    print("🛰️ ELITE PULSE PROBE START: $cmd");
+    _log("🛰️ ELITE PULSE PROBE START: $cmd");
     final session = await FFmpegKit.execute(cmd);
     final String logs = await session.getAllLogsAsString() ?? '';
     
@@ -289,79 +355,83 @@ class DetectorEngine {
     cuts = reg.allMatches(logs).length;
 
     double cutsPerSecond = cuts / probeDuration;
-    print("🛰️ PULSE DATA: Cuts found: $cuts | Density: ${cutsPerSecond.toStringAsFixed(2)} cuts/sec");
+    _log("🛰️ PULSE DATA: Cuts found: $cuts | Density: ${cutsPerSecond.toStringAsFixed(2)} cuts/sec");
 
     // NEW AGGRESSIVE RANGES
     if (cutsPerSecond > 0.8) {
-      print("🛰️ CALIBRATION DECISION: ACTION (THRESHOLD 0.32)");
+      _log("🛰️ CALIBRATION DECISION: ACTION (THRESHOLD 0.32)");
       return 0.32;
     }
     if (cutsPerSecond < 0.5) {
-      print("🛰️ CALIBRATION DECISION: SENSITIVE (THRESHOLD 0.15)");
+      _log("🛰️ CALIBRATION DECISION: SENSITIVE (THRESHOLD 0.15)");
       return 0.15;
     }
-    print("🛰️ CALIBRATION DECISION: BALANCED (THRESHOLD 0.23)");
+    _log("🛰️ CALIBRATION DECISION: BALANCED (THRESHOLD 0.23)");
     return 0.23;
   }
 }
 
 class CacheManager {
-  /// Safely cleans up the session's temporary files and folders using fast, targeted non-recursive scans.
+  /// Clears ALL temporary files the app generates:
+  ///   • thumbnails_* folders   (scene detection thumbnails)
+  ///   • frame_review_* folders (frame extraction preview sessions)
+  ///   • production_clips/      (exported clip staging area)
+  ///   • captured_frame_* files (single captured frames)
+  ///   • update.apk             (downloaded app update)
   static Future<void> clearDetectionCache({Set<String>? keepPaths}) async {
     try {
       final Directory tempDir = await getTemporaryDirectory();
       if (!await tempDir.exists()) return;
 
-      // Scan only the top-level temporary directory non-recursively
       final List<FileSystemEntity> entities = tempDir.listSync(recursive: false);
       for (final FileSystemEntity entity in entities) {
         final String path = entity.path;
         final String name = path.split(Platform.pathSeparator).last;
 
+        // ── Files ──────────────────────────────────────────────────────────
         if (entity is File) {
-          if (name.startsWith('captured_frame_')) {
+          final bool isTarget =
+              name.startsWith('captured_frame_') || name == 'update.apk';
+          if (isTarget) {
+            try { await entity.delete(); } catch (_) {}
+          }
+
+        // ── Directories ────────────────────────────────────────────────────
+        } else if (entity is Directory) {
+          final bool isTarget =
+              name.startsWith('thumbnails_') ||
+              name == 'thumbnails' ||
+              name.startsWith('frame_review_') ||
+              name == 'production_clips';
+
+          if (!isTarget) continue;
+
+          // Respect keepPaths so active thumbnails aren't wiped mid-session
+          bool hasActiveFiles = false;
+          if (keepPaths != null && keepPaths.isNotEmpty) {
             try {
-              await entity.delete();
+              for (var f in entity.listSync(recursive: true)) {
+                if (keepPaths.contains(f.path)) { hasActiveFiles = true; break; }
+              }
             } catch (_) {}
           }
-        } else if (entity is Directory) {
-          if (name.startsWith('frame_review_') || name.startsWith('thumbnails_') || name == 'thumbnails') {
-            // Check if any file inside this directory is in keepPaths
-            bool hasActiveFiles = false;
-            if (keepPaths != null && keepPaths.isNotEmpty) {
-              try {
-                final List<FileSystemEntity> files = entity.listSync(recursive: true);
-                for (var file in files) {
-                  if (keepPaths.contains(file.path)) {
-                    hasActiveFiles = true;
-                    break;
-                  }
-                }
-              } catch (_) {}
-            }
 
-            if (!hasActiveFiles) {
-              try {
-                await entity.delete(recursive: true);
-              } catch (_) {}
-            } else {
-              // If it contains active files, clean up only the inactive files in it
-              try {
-                final List<FileSystemEntity> files = entity.listSync(recursive: false);
-                for (var file in files) {
-                  if (file is File && (keepPaths == null || !keepPaths.contains(file.path))) {
-                    try {
-                      await file.delete();
-                    } catch (_) {}
-                  }
+          if (!hasActiveFiles) {
+            try { await entity.delete(recursive: true); } catch (_) {}
+          } else {
+            // Partial clean – delete only files not in keepPaths
+            try {
+              for (var f in entity.listSync(recursive: false)) {
+                if (f is File && (keepPaths == null || !keepPaths.contains(f.path))) {
+                  try { await f.delete(); } catch (_) {}
                 }
-              } catch (_) {}
-            }
+              }
+            } catch (_) {}
           }
         }
       }
     } catch (e) {
-      print("Error clearing detection cache: $e");
+      DetectorEngine._log("Error clearing temp files: $e");
     }
   }
 
@@ -385,7 +455,7 @@ class CacheManager {
       const int limit = 500 * 1024 * 1024;
       return totalSize > limit;
     } catch (e) {
-      print("Error checking cache size: $e");
+      DetectorEngine._log("Error checking cache size: $e");
       return false;
     }
   }

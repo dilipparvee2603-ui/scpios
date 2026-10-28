@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:scenepack_mobile/logic/detector_engine.dart';
 import 'package:video_player/video_player.dart';
 import 'package:gal/gal.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import 'dart:io';
@@ -47,7 +48,7 @@ class AppNavigator extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF05070E),
+        backgroundColor: const Color(0xFF0D0F14),
         appBar: (state.status == "HOME" || state.status == "UPDATE" || state.status == "ACCOUNT" || state.status == "SETTINGS") ? null : AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -65,7 +66,7 @@ class AppNavigator extends StatelessWidget {
         body: Stack(
           children: [
             // Dark base background
-            Positioned.fill(child: Container(color: const Color(0xFF05070E))),
+            Positioned.fill(child: Container(color: const Color(0xFF0D0F14))),
             // Brand red top blob (global glow)
             Positioned(
               top: -120, left: -60, right: -60,
@@ -74,7 +75,7 @@ class AppNavigator extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFFFF2D55).withOpacity(0.10),
+                      const Color(0xFFFF3B30).withOpacity(0.03),
                       Colors.transparent,
                     ],
                   ),
@@ -90,16 +91,12 @@ class AppNavigator extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFFFF2D55).withOpacity(0.07),
+                      const Color(0xFFFF3B30).withOpacity(0.02),
                       Colors.transparent,
                     ],
                   ),
                 ),
               ),
-            ),
-            // Tech-Grid Background Texture (Optimized const RepaintBoundary Grid)
-            const Positioned.fill(
-              child: TechGridBackground(),
             ),
             // Main Content Layer
             SafeArea(
@@ -156,11 +153,22 @@ class AppNavigator extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("CFX", style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, height: 0.9, letterSpacing: -2)),
+                  const Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: "CF"),
+                        TextSpan(
+                          text: "X",
+                          style: TextStyle(color: Color(0xFFC0000A)),
+                        ),
+                      ],
+                    ),
+                    style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, height: 0.9, letterSpacing: -2, color: Colors.white),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text("SCP", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 8, color: const Color(0xFFFF2D55).withOpacity(0.8))),
+                      const Text("SCP", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 8, color: Colors.white)),
                       const SizedBox(width: 8),
                       Container(width: 1, height: 10, color: Colors.white10),
                       const SizedBox(width: 8),
@@ -189,21 +197,55 @@ class AppNavigator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withOpacity(0.06),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withOpacity(0.02)),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStatItem("SYSTEM", "ONLINE"),
+                    _buildStatItem(
+                      "SYSTEM", 
+                      "ONLINE",
+                      trailing: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
                     GestureDetector(
                       onLongPress: state.currentUser?.email == 'dilipkumar16398@gmail.com'
                           ? () => _showDeveloperPanel(context, state)
                           : null,
-                      child: _buildStatItem("LICENSE", state.isUnlimited ? "ELITE" : "STANDARD"),
+                      child: _buildStatItem(
+                        "LICENSE", 
+                        state.isUnlimited ? "ELITE" : "STANDARD",
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: state.isUnlimited ? const Color(0xFFFFB300).withOpacity(0.12) : Colors.white.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: state.isUnlimited ? const Color(0xFFFFB300).withOpacity(0.3) : Colors.white.withOpacity(0.08),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            state.isUnlimited ? "PRO" : "FREE",
+                            style: TextStyle(
+                              color: state.isUnlimited ? const Color(0xFFFFB300) : Colors.white38,
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -227,7 +269,7 @@ class AppNavigator extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           
-          const Text("EDITORIAL WORKFLOWS", style: TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          const Text("EDITORIAL WORKFLOWS", style: TextStyle(color: Color(0xFF7F8792), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
           const SizedBox(height: 24),
           _buildModernToolCard(
             context, state,
@@ -280,7 +322,7 @@ class AppNavigator extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
             children: [
-              Icon(icon, size: 14, color: color ?? const Color(0xFFFF2D55)),
+              Icon(icon, size: 14, color: color ?? const Color(0xFFFF3B30)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(label, 
@@ -312,10 +354,10 @@ class AppNavigator extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFF2D55),
+                      color: Color(0xFFFF3B30),
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Color(0xFFFF2D55), blurRadius: 4, spreadRadius: 1),
+                        BoxShadow(color: Color(0xFFFF3B30), blurRadius: 4, spreadRadius: 1),
                       ],
                     ),
                   ),
@@ -335,9 +377,9 @@ class AppNavigator extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.02)),
       ),
       child: InkWell(
         onTap: url.isNotEmpty ? () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication) : null,
@@ -349,10 +391,10 @@ class AppNavigator extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF2D55).withOpacity(0.1),
+                  color: const Color(0xFFFF3B30).withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.campaign_rounded, color: Color(0xFFFF2D55), size: 16),
+                child: const Icon(Icons.campaign_rounded, color: Color(0xFFFF3B30), size: 16),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -385,9 +427,9 @@ class AppNavigator extends StatelessWidget {
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withOpacity(0.02)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -396,10 +438,10 @@ class AppNavigator extends StatelessWidget {
                     width: 6,
                     height: 6,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFF2D55),
+                      color: Color(0xFFFF3B30),
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Color(0xFFFF2D55), blurRadius: 10, spreadRadius: 1),
+                        BoxShadow(color: Color(0xFFFF3B30), blurRadius: 10, spreadRadius: 1),
                       ]
                     ),
                   ),
@@ -420,9 +462,9 @@ class AppNavigator extends StatelessWidget {
     bool isActive = state.toolMode == mode;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isActive ? const Color(0xFFFF2D55) : Colors.white.withOpacity(0.08)),
+        border: Border.all(color: isActive ? const Color(0xFFFF3B30).withOpacity(0.65) : Colors.white.withOpacity(0.02), width: 1),
       ),
       child: InkWell(
         onTap: () {
@@ -441,10 +483,14 @@ class AppNavigator extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFFFF2D55).withOpacity(0.1) : Colors.white.withOpacity(0.02),
+                  color: isActive ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1A1D24),
                   borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: isActive ? const Color(0xFFFF3B30).withOpacity(0.3) : Colors.white.withOpacity(0.06),
+                    width: 1,
+                  ),
                 ),
-                child: Icon(icon, color: isActive ? const Color(0xFFFF2D55) : Colors.white24, size: 24),
+                child: Icon(icon, color: isActive ? const Color(0xFFFF3B30) : Colors.white24, size: 24),
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -453,13 +499,21 @@ class AppNavigator extends StatelessWidget {
                   children: [
                     Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                     const SizedBox(height: 4),
-                    Text(desc, style: const TextStyle(color: Colors.white38, fontSize: 11, height: 1.3)),
+                    Text(desc, style: const TextStyle(color: Color(0xFF9AA0A6), fontSize: 11, height: 1.3)),
                   ],
                 ),
               ),
               state.isUiLocked
-                  ? const Icon(Icons.lock_rounded, color: Color(0xFFFF2D55), size: 16)
-                  : Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withOpacity(0.05), size: 14),
+                  ? Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0E1015),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withOpacity(0.06)),
+                      ),
+                      child: const Icon(Icons.lock_rounded, color: Color(0xFFFF3B30), size: 12),
+                    )
+                  : Icon(Icons.arrow_forward_ios_rounded, color: const Color(0xFF6C727F).withOpacity(0.80), size: 14),
             ],
           ),
         ),
@@ -467,16 +521,26 @@ class AppNavigator extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, {VoidCallback? onLongPress}) {
+  Widget _buildStatItem(String label, String value, {VoidCallback? onLongPress, Widget? trailing}) {
     return GestureDetector(
       onLongPress: onLongPress,
       behavior: HitTestBehavior.opaque,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Left aligned for readability
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: const TextStyle(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
           const SizedBox(height: 6),
-          Text(value, style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(value, style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              if (trailing != null) ...[
+                const SizedBox(width: 6),
+                trailing,
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -490,7 +554,7 @@ class AppNavigator extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFFFF2D55), size: 24),
+            Icon(icon, color: const Color(0xFFFF3B30), size: 24),
             const SizedBox(height: 8),
             Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 2)),
           ],
@@ -504,7 +568,7 @@ class AppNavigator extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0E131F),
+        color: const Color(0xFF1A1D24),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF1E293B)),
       ),
@@ -524,7 +588,7 @@ class AppNavigator extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("» ", style: TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.bold, fontSize: 12)),
+                const Text("» ", style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold, fontSize: 12)),
                 Expanded(
                   child: Text(
                     log.toUpperCase(), 
@@ -561,13 +625,13 @@ class AppNavigator extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ui.ImageFilter.blur(sigmaX: 45, sigmaY: 45),
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF0C0E17).withOpacity(0.85),
+                color: const Color(0xFF1B1F27).withOpacity(0.85),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
+                border: Border.all(color: Colors.white.withOpacity(0.02), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -575,12 +639,12 @@ class AppNavigator extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF2D55).withOpacity(0.1),
+                      color: const Color(0xFFFF3B30).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.info_outline_rounded,
-                      color: Color(0xFFFF2D55),
+                      color: Color(0xFFFF3B30),
                       size: 32,
                     ),
                   ),
@@ -609,13 +673,30 @@ class AppNavigator extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF2D55),
+                      backgroundColor: const Color(0xFFFF3B30),
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       elevation: 0,
                     ),
                     child: const Text("GOT IT", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      launchUrl(
+                        Uri.parse("https://cfxstudios.in/docs"),
+                        mode: LaunchMode.externalApplication,
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      minimumSize: const Size(double.infinity, 48),
+                      side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text("VIEW FULL DOCS", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ],
               ),
@@ -637,13 +718,13 @@ class AppNavigator extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ui.ImageFilter.blur(sigmaX: 45, sigmaY: 45),
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF0C0E17).withOpacity(0.85),
+                color: const Color(0xFF1B1F27).withOpacity(0.85),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
+                border: Border.all(color: Colors.white.withOpacity(0.02), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -651,20 +732,20 @@ class AppNavigator extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF2D55).withOpacity(0.1),
+                      color: const Color(0xFFFF3B30).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.hourglass_empty_rounded,
-                      color: Color(0xFFFF2D55),
+                    child: Icon(
+                      state.isTrialUsedOnAnotherEmail ? Icons.block_rounded : Icons.hourglass_empty_rounded,
+                      color: const Color(0xFFFF3B30),
                       size: 32,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    "FREE TRIAL EXPIRED",
+                  Text(
+                    state.isTrialUsedOnAnotherEmail ? "TRIAL ALREADY USED" : "FREE TRIAL EXPIRED",
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
@@ -673,7 +754,9 @@ class AppNavigator extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "Your 2-day trial has completed. Upgrade to PRO to continue using the suite.",
+                    state.isTrialUsedOnAnotherEmail
+                        ? "Free trial already used on another email on this device. Upgrade to PRO to continue using the suite."
+                        : "Your 2-day trial has completed. Upgrade to PRO to continue using the suite.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.6),
@@ -710,12 +793,12 @@ class AppNavigator extends StatelessWidget {
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFFF2D55), Color(0xFFBB1035)],
+                              colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)],
                             ),
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF2D55).withOpacity(0.3),
+                                color: const Color(0xFFFF3B30).withOpacity(0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -760,40 +843,44 @@ class AppNavigator extends StatelessWidget {
   void _showDeveloperPanel(BuildContext context, AppState state) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0C0E17),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: Colors.white10, width: 1),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(2))),
-            ),
-            const SizedBox(height: 24),
-            const Text("GHOST DEVELOPER PANEL", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Color(0xFFFF2D55))),
-            const SizedBox(height: 20),
-            _devActionTile("RESET ELITE ACCESS", "Removes unlimited license", Icons.lock_reset_rounded, () async {
-              await state.resetEliteAccess();
-              if (ctx.mounted) Navigator.pop(ctx);
-            }),
-            const SizedBox(height: 12),
-            _devActionTile("CLEAR DAILY USAGE", "Resets today's video count", Icons.refresh_rounded, () async {
-              await state.resetDailyUsage();
-              if (ctx.mounted) Navigator.pop(ctx);
-            }),
-            const SizedBox(height: 12),
-            _devActionTile("SYSTEM REBOOT", "Clear all temporary cache", Icons.power_settings_new_rounded, () async {
-               final Directory tempDir = await getTemporaryDirectory();
-               if (await tempDir.exists()) await tempDir.delete(recursive: true);
-               if (ctx.mounted) Navigator.pop(ctx);
-            }),
-            const SizedBox(height: 12),
-          ],
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CustomPaint(
+        painter: SheetBorderPainter(
+          fillColor: const Color(0xFF1B1F27),
+          borderColor: Colors.white.withOpacity(0.02),
+          borderWidth: 1,
+          borderRadius: 24,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 24),
+              const Text("GHOST DEVELOPER PANEL", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Color(0xFFFF3B30))),
+              const SizedBox(height: 20),
+              _devActionTile("RESET ELITE ACCESS", "Removes unlimited license", Icons.lock_reset_rounded, () async {
+                await state.resetEliteAccess();
+                if (ctx.mounted) Navigator.pop(ctx);
+              }),
+              const SizedBox(height: 12),
+              _devActionTile("CLEAR DAILY USAGE", "Resets today's video count", Icons.refresh_rounded, () async {
+                await state.resetDailyUsage();
+                if (ctx.mounted) Navigator.pop(ctx);
+              }),
+              const SizedBox(height: 12),
+              _devActionTile("SYSTEM REBOOT", "Clear all temporary cache", Icons.power_settings_new_rounded, () async {
+                 final Directory tempDir = await getTemporaryDirectory();
+                 if (await tempDir.exists()) await tempDir.delete(recursive: true);
+                 if (ctx.mounted) Navigator.pop(ctx);
+              }),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -802,19 +889,19 @@ class AppNavigator extends StatelessWidget {
   Widget _devActionTile(String title, String sub, IconData icon, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.02)),
       ),
       child: ListTile(
         onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFFF2D55).withOpacity(0.1),
+            color: const Color(0xFFFF3B30).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFFFF2D55), size: 18),
+          child: Icon(icon, color: const Color(0xFFFF3B30), size: 18),
         ),
         title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 0.5)),
         subtitle: Text(sub, style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10)),
@@ -826,47 +913,51 @@ class AppNavigator extends StatelessWidget {
   void _showEngineLogs(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0C0E17),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: Colors.white10, width: 1),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(2))),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("UPDATE LOGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Colors.white)),
-                TextButton(
-                  onPressed: () {
-                     Navigator.pop(ctx);
-                     _showOldLogs(context);
-                  },
-                  child: const Text("PREVIOUS LOGS", style: TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildChangelogCard(
-              version: "v2.5.3 ELITE",
-              logs: [
-                "Dual-Pass Scene Detection (0.23 + 0.18 threshold)",
-                "Intelligent Cut Merging (0.5s proximity logic)",
-                "Optimized scanner for subtle transition accuracy",
-                "Integrated official CFX Logo as App Icon",
-                "Refined Selection UI (Balanced 2px Neon borders)",
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CustomPaint(
+        painter: SheetBorderPainter(
+          fillColor: const Color(0xFF1B1F27),
+          borderColor: Colors.white.withOpacity(0.02),
+          borderWidth: 1,
+          borderRadius: 24,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("UPDATE LOGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Colors.white)),
+                  TextButton(
+                    onPressed: () {
+                       Navigator.pop(ctx);
+                       _showOldLogs(context);
+                    },
+                    child: const Text("PREVIOUS LOGS", style: TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildChangelogCard(
+                version: "v2.5.3 ELITE",
+                logs: [
+                  "Dual-Pass Scene Detection (0.23 + 0.18 threshold)",
+                  "Intelligent Cut Merging (0.5s proximity logic)",
+                  "Optimized scanner for subtle transition accuracy",
+                  "Integrated official CFX Logo as App Icon",
+                  "Refined Selection UI (Balanced 2px Neon borders)",
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -875,33 +966,37 @@ class AppNavigator extends StatelessWidget {
   void _showOldLogs(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0C0E17),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: Colors.white10, width: 1),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(2))),
-            ),
-            const SizedBox(height: 24),
-            const Text("LEGACY LOGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Colors.white)),
-            const SizedBox(height: 16),
-            _buildChangelogCard(
-              version: "v2.5.2",
-              logs: [
-                "Integrated official CFX Logo as App Icon",
-                "Refined Selection UI (Balanced 2px Neon borders)",
-                "Streamlined results workflow (Optimized for speed)",
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CustomPaint(
+        painter: SheetBorderPainter(
+          fillColor: const Color(0xFF1B1F27),
+          borderColor: Colors.white.withOpacity(0.02),
+          borderWidth: 1,
+          borderRadius: 24,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 24),
+              const Text("LEGACY LOGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Colors.white)),
+              const SizedBox(height: 16),
+              _buildChangelogCard(
+                version: "v2.5.2",
+                logs: [
+                  "Integrated official CFX Logo as App Icon",
+                  "Refined Selection UI (Balanced 2px Neon borders)",
+                  "Streamlined results workflow (Optimized for speed)",
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -911,49 +1006,53 @@ class AppNavigator extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0C0E17),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: Colors.white10, width: 1),
-      ),
-      builder: (ctx) => SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(2))),
-              ),
-              const SizedBox(height: 24),
-              const Text("ELITE PRO BENEFITS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Color(0xFFFF2D55))),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF2D55).withOpacity(0.08), 
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.2)),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CustomPaint(
+        painter: SheetBorderPainter(
+          fillColor: const Color(0xFF1B1F27),
+          borderColor: Colors.white.withOpacity(0.02),
+          borderWidth: 1,
+          borderRadius: 24,
+        ),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(2))),
                 ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.stars_rounded, color: Color(0xFFFF2D55), size: 16),
-                    SizedBox(width: 10),
-                    Text("LIFETIME PRO: ₹299 ONLY", style: TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
-                  ],
+                const SizedBox(height: 24),
+                const Text("ELITE PRO BENEFITS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13, color: Color(0xFFFF3B30))),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF3B30).withOpacity(0.08), 
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.2)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.stars_rounded, color: Color(0xFFFF3B30), size: 16),
+                      SizedBox(width: 10),
+                      Text("LIFETIME PRO: ₹299 ONLY", style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
+                    ],
+                  ),
                 ),
-              ),
-              _buildProItem(Icons.all_inclusive_rounded, "Unlimited Video Processing", "No daily 5-video limit. Process entire movies without stopping."),
-              const SizedBox(height: 12),
-              _buildProItem(Icons.bolt_rounded, "Elite Preset Intelligence", "Optimized presets for Action (0.32), Balanced (0.23), and Sensitive (0.15) clips."),
-              const SizedBox(height: 12),
-              _buildProItem(Icons.high_quality_rounded, "Lossless Export Access", "Enable pure RAW exports with CRF 0 quality settings."),
-              const SizedBox(height: 12),
-              _buildProItem(Icons.support_agent_rounded, "Priority Stability", "Faster processing priority and background execution support."),
-              const SizedBox(height: 24),
-            ],
+                _buildProItem(Icons.all_inclusive_rounded, "Unlimited Video Processing", "No daily 5-video limit. Process entire movies without stopping."),
+                const SizedBox(height: 12),
+                _buildProItem(Icons.bolt_rounded, "Elite Preset Intelligence", "Optimized presets for Action (0.32), Balanced (0.23), and Sensitive (0.15) clips."),
+                const SizedBox(height: 12),
+                _buildProItem(Icons.high_quality_rounded, "Lossless Export Access", "Enable pure RAW exports with CRF 0 quality settings."),
+                const SizedBox(height: 12),
+                _buildProItem(Icons.support_agent_rounded, "Priority Stability", "Faster processing priority and background execution support."),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -963,9 +1062,9 @@ class AppNavigator extends StatelessWidget {
   Widget _buildProItem(IconData icon, String title, String desc) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.02)),
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -974,10 +1073,10 @@ class AppNavigator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF2D55).withOpacity(0.08),
+              color: const Color(0xFFFF3B30).withOpacity(0.08),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: const Color(0xFFFF2D55), size: 18),
+            child: Icon(icon, color: const Color(0xFFFF3B30), size: 18),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1002,7 +1101,7 @@ class AppNavigator extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF0E131F),
+        backgroundColor: const Color(0xFF1A1D24),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: Color(0xFF1E293B)),
@@ -1014,12 +1113,12 @@ class AppNavigator extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: (isError ? const Color(0xFFFF2D55) : const Color(0xFF10B981)).withOpacity(0.08),
+                color: (isError ? const Color(0xFFFF3B30) : const Color(0xFF10B981)).withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isError ? Icons.error_outline_rounded : Icons.check_rounded, 
-                color: isError ? const Color(0xFFFF2D55) : const Color(0xFF10B981), 
+                color: isError ? const Color(0xFFFF3B30) : const Color(0xFF10B981), 
                 size: 14
               ),
             ),
@@ -1040,7 +1139,7 @@ class AppNavigator extends StatelessWidget {
       {required String title, required String desc, required IconData icon, required String mode}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0E131F),
+        color: const Color(0xFF1A1D24),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFF1E293B)),
       ),
@@ -1056,8 +1155,8 @@ class AppNavigator extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: const Color(0xFFFF2D55).withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
-                child: Icon(icon, color: const Color(0xFFFF2D55), size: 28),
+                decoration: BoxDecoration(color: const Color(0xFFFF3B30).withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
+                child: Icon(icon, color: const Color(0xFFFF3B30), size: 28),
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -1083,7 +1182,7 @@ class AppNavigator extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(state.selectedIndices.isEmpty ? "FINDING SCENES" : "PREPARING EXPORT", style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 5, color: Color(0xFFFF2D55))),
+          Text(state.selectedIndices.isEmpty ? "FINDING SCENES" : "PREPARING EXPORT", style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 5, color: Color(0xFFFF3B30))),
           const SizedBox(height: 8),
           const Text("DO NOT CLOSE THE SUITE", style: TextStyle(fontSize: 8, color: Colors.white24, letterSpacing: 1)),
           const SizedBox(height: 24),
@@ -1099,16 +1198,16 @@ class AppNavigator extends StatelessWidget {
               widthFactor: state.progress / 100,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)]),
+                  gradient: const LinearGradient(colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)]),
                   borderRadius: BorderRadius.circular(3),
-                  boxShadow: [BoxShadow(color: const Color(0xFFFF2D55).withOpacity(0.4), blurRadius: 12)],
+                  boxShadow: [BoxShadow(color: const Color(0xFFFF3B30).withOpacity(0.4), blurRadius: 12)],
                 ),
               ),
             ),
           ),
           const SizedBox(height: 16),
           Text("${state.progress.toInt()}%",
-              style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF2D55), fontSize: 20)),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF3B30), fontSize: 20)),
           const Text("Please wait...",
               style: TextStyle(color: Colors.grey, fontSize: 11, letterSpacing: 2)),
         ],
@@ -1122,9 +1221,9 @@ class AppNavigator extends StatelessWidget {
         width: MediaQuery.of(context).size.width * 0.94,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
+          color: Colors.white.withOpacity(0.06),
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(color: Colors.white.withOpacity(0.02)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1132,11 +1231,11 @@ class AppNavigator extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF2D55).withOpacity(0.1),
+                color: const Color(0xFFFF3B30).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(state.toolMode == "DETECTION" ? Icons.radar_rounded : Icons.auto_awesome_motion_rounded,
-                  size: 64, color: const Color(0xFFFF2D55)),
+                  size: 64, color: const Color(0xFFFF3B30)),
             ),
             const SizedBox(height: 24),
             Text(state.toolMode == "DETECTION" ? "SCENE FINDER" : "FRAME PACKER",
@@ -1178,9 +1277,9 @@ class AppNavigator extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withOpacity(0.06),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Colors.white.withOpacity(0.02)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1191,7 +1290,7 @@ class AppNavigator extends StatelessWidget {
                   const Text("SENSITIVITY PRESET",
                       style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 12)),
                   Text(state.calibrationStatus,
-                      style: const TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.bold, fontSize: 10)),
+                      style: const TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold, fontSize: 10)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -1224,10 +1323,10 @@ class AppNavigator extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFF2D55).withOpacity(0.2) : Colors.white.withOpacity(0.02),
+            color: isSelected ? const Color(0xFFFF3B30).withOpacity(0.2) : Colors.white.withOpacity(0.02),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? const Color(0xFFFF2D55) : Colors.white.withOpacity(0.08),
+              color: isSelected ? const Color(0xFFFF3B30) : Colors.white.withOpacity(0.02),
               width: 1.5,
             ),
           ),
@@ -1238,7 +1337,7 @@ class AppNavigator extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1,
-                color: isSelected ? const Color(0xFFFF2D55) : Colors.grey,
+                color: isSelected ? const Color(0xFFFF3B30) : Colors.grey,
               ),
             ),
           ),
@@ -1254,13 +1353,13 @@ class AppNavigator extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         gradient: isLocked
             ? null
-            : const LinearGradient(colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)]),
-        color: isLocked ? Colors.white.withOpacity(0.04) : null,
-        border: isLocked ? Border.all(color: Colors.white.withOpacity(0.08)) : null,
+            : const LinearGradient(colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)]),
+        color: isLocked ? Colors.white.withOpacity(0.06) : null,
+        border: isLocked ? Border.all(color: Colors.white.withOpacity(0.02)) : null,
         boxShadow: isLocked
             ? null
             : [
-                BoxShadow(color: const Color(0xFFFF2D55).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                BoxShadow(color: const Color(0xFFFF3B30).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
               ],
       ),
       child: ElevatedButton.icon(
@@ -1283,7 +1382,7 @@ class AppNavigator extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text("Error detecting scenes: ${e.toString().split('\n').first}"),
-                        backgroundColor: const Color(0xFFFF2D55),
+                        backgroundColor: const Color(0xFFFF3B30),
                       ),
                     );
                   }
@@ -1310,9 +1409,9 @@ class AppNavigator extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withOpacity(0.06),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Colors.white.withOpacity(0.02)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1333,14 +1432,14 @@ class AppNavigator extends StatelessWidget {
                     ],
                   ),
                   Text("${state.exportStartTime.toStringAsFixed(1)}s", 
-                      style: const TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.w900, fontSize: 16)),
+                      style: const TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.w900, fontSize: 16)),
                 ],
               ),
               Slider(
                 value: state.exportStartTime.clamp(0, state.videoDuration > 0 ? state.videoDuration : 10),
                 min: 0,
                 max: state.videoDuration > 0 ? state.videoDuration : 10,
-                activeColor: const Color(0xFFFF2D55),
+                activeColor: const Color(0xFFFF3B30),
                 inactiveColor: Colors.white.withOpacity(0.12),
                 onChanged: state.videoDuration == 0 ? null : (v) {
                   state.setExportRange(v, v > state.exportEndTime ? v : state.exportEndTime);
@@ -1363,26 +1462,26 @@ class AppNavigator extends StatelessWidget {
                     ],
                   ),
                   Text("${state.exportEndTime.toStringAsFixed(1)}s", 
-                      style: const TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.w900, fontSize: 16)),
+                      style: const TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.w900, fontSize: 16)),
                 ],
               ),
               Slider(
                 value: state.exportEndTime.clamp(0, state.videoDuration > 0 ? state.videoDuration : 10),
                 min: 0,
                 max: state.videoDuration > 0 ? state.videoDuration : 10,
-                activeColor: const Color(0xFFFF2D55),
+                activeColor: const Color(0xFFFF3B30),
                 inactiveColor: Colors.white.withOpacity(0.12),
                 onChanged: state.videoDuration == 0 ? null : (v) {
                   state.setExportRange(v < state.exportStartTime ? v : state.exportStartTime, v);
                 },
               ),
-              Divider(height: 40, color: Colors.white.withOpacity(0.08)),
+              Divider(height: 40, color: Colors.white.withOpacity(0.02)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text("Images Per Second", style: TextStyle(color: Colors.grey, fontSize: 16)),
                   Text("${state.exportFps.toInt()} fps", 
-                      style: const TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.bold, fontSize: 16)),
+                      style: const TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
               ),
               Slider(
@@ -1390,7 +1489,7 @@ class AppNavigator extends StatelessWidget {
                 min: 1,
                 max: state.videoFps,
                 divisions: state.videoFps.toInt() > 1 ? state.videoFps.toInt() - 1 : 1,
-                activeColor: const Color(0xFFFF2D55),
+                activeColor: const Color(0xFFFF3B30),
                 inactiveColor: Colors.white.withOpacity(0.12),
                 onChanged: (v) => state.setExportFps(v),
               ),
@@ -1406,13 +1505,13 @@ class AppNavigator extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             gradient: state.isUiLocked
                 ? null
-                : const LinearGradient(colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)]),
-            color: state.isUiLocked ? Colors.white.withOpacity(0.04) : null,
-            border: state.isUiLocked ? Border.all(color: Colors.white.withOpacity(0.08)) : null,
+                : const LinearGradient(colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)]),
+            color: state.isUiLocked ? Colors.white.withOpacity(0.06) : null,
+            border: state.isUiLocked ? Border.all(color: Colors.white.withOpacity(0.02)) : null,
             boxShadow: state.isUiLocked
                 ? null
                 : [
-                    BoxShadow(color: const Color(0xFFFF2D55).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                    BoxShadow(color: const Color(0xFFFF3B30).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
                   ],
           ),
           child: ElevatedButton.icon(
@@ -1445,33 +1544,36 @@ class AppNavigator extends StatelessWidget {
   }
 
   Widget _buildFrameReview(BuildContext context, AppState state) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("FRAME REVIEW (${state.reviewFrames.length})",
-                  style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.grey)),
-              TextButton(
-                onPressed: () => state.setStatus("PREVIEW"),
-                child: const Text("CLOSE", style: TextStyle(color: Color(0xFFFF2D55))),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("FRAME REVIEW (${state.reviewFrames.length})",
+                      style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.grey)),
+                  TextButton(
+                    onPressed: () => state.setStatus("PREVIEW"),
+                    child: const Text("CLOSE", style: TextStyle(color: Color(0xFFFF3B30))),
+                  ),
+                ],
               ),
+              const SizedBox(height: 12),
             ],
           ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: state.aspectRatio > 1.2 ? 2 : 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: state.aspectRatio,
-            ),
-            itemCount: state.reviewFrames.length,
-            itemBuilder: (context, index) {
+        ),
+        SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: state.aspectRatio > 1.2 ? 2 : 3,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: state.aspectRatio,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
               bool isSelected = state.selectedFrameIndices.contains(index);
               return GestureDetector(
                 onTap: () => state.toggleFrameSelection(index),
@@ -1480,7 +1582,7 @@ class AppNavigator extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFFFF2D55) : Colors.white.withOpacity(0.08),
+                      color: isSelected ? const Color(0xFFFF3B30) : Colors.white.withOpacity(0.02),
                       width: isSelected ? 3 : 1,
                     ),
                   ),
@@ -1491,238 +1593,249 @@ class AppNavigator extends StatelessWidget {
                       Image.file(File(state.reviewFrames[index]), cacheWidth: 240, fit: BoxFit.cover),
                       if (isSelected)
                         const Center(
-                          child: Icon(Icons.check_circle, color: Color(0xFFFF2D55), size: 32),
+                          child: Icon(Icons.check_circle, color: Color(0xFFFF3B30), size: 32),
                         ),
                     ],
                   ),
                 ),
               );
             },
+            childCount: state.reviewFrames.length,
           ),
-          const SizedBox(height: 16),
-          _buildActionBtn(
-            label: "SAVE ${state.selectedFrameIndices.length} FRAMES",
-            onPressed: state.selectedFrameIndices.isEmpty ? null : () async {
-              await state.saveSelectedFrames();
-              if (context.mounted) {
-                _showPremiumSnackBar(context, "FRAMES SAVED TO GALLERY");
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          if (state.isDriveConnected)
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: OutlinedButton.icon(
-                onPressed: (state.selectedFrameIndices.isEmpty || state.isCloudSyncing) ? null : () async {
-                  final selectedFiles = state.selectedFrameIndices.map((i) => state.reviewFrames[i]).toList();
-                  final success = await state.syncToCloud(selectedFiles);
+        ),
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              _buildActionBtn(
+                label: "SAVE ${state.selectedFrameIndices.length} FRAMES",
+                onPressed: state.selectedFrameIndices.isEmpty ? null : () async {
+                  await state.saveSelectedFrames();
                   if (context.mounted) {
-                    if (success) {
-                      _showPremiumSnackBar(context, "FRAMES SYNCED TO DRIVE");
-                    } else {
-                      _showPremiumSnackBar(context, "SYNC TO DRIVE FAILED", isError: true);
-                    }
+                    _showPremiumSnackBar(context, "FRAMES SAVED TO GALLERY");
                   }
                 },
-                icon: state.isCloudSyncing 
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                      ),
-                    )
-                  : const Icon(Icons.cloud_upload_rounded),
-                label: Text(
-                  state.isCloudSyncing 
-                    ? "SYNCING... ${(state.cloudProgress * 100).toInt()}%" 
-                    : "SYNC TO CLOUD", 
-                  style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF10B981),
-                  side: const BorderSide(color: Color(0xFF10B981)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
               ),
-            ),
-          const SizedBox(height: 16),
-        ],
-      ),
+              const SizedBox(height: 12),
+              if (state.isDriveConnected)
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: OutlinedButton.icon(
+                    onPressed: (state.selectedFrameIndices.isEmpty || state.isCloudSyncing) ? null : () async {
+                      final selectedFiles = state.selectedFrameIndices.map((i) => state.reviewFrames[i]).toList();
+                      final success = await state.syncToCloud(selectedFiles);
+                      if (context.mounted) {
+                        if (success) {
+                          _showPremiumSnackBar(context, "FRAMES SYNCED TO DRIVE");
+                        } else {
+                          _showPremiumSnackBar(context, "SYNC TO DRIVE FAILED", isError: true);
+                        }
+                      }
+                    },
+                    icon: state.isCloudSyncing 
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                          ),
+                        )
+                      : const Icon(Icons.cloud_upload_rounded),
+                    label: Text(
+                      state.isCloudSyncing 
+                        ? "SYNCING... ${(state.cloudProgress * 100).toInt()}%" 
+                        : "SYNC TO CLOUD", 
+                      style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF10B981),
+                      side: const BorderSide(color: Color(0xFF10B981)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildClips(BuildContext context, AppState state) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("DETECTED CLIPS (${state.scenes.length})",
-                  style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.grey)),
-              TextButton(
-                onPressed: () => state.setStatus("PREVIEW"),
-                child: const Text("CLOSE", style: TextStyle(color: Color(0xFFFF2D55))),
-              ),
-            ],
-          ),
-          // Integrated Command Hub (Always Visible)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    const Icon(Icons.tune_rounded, color: Colors.white38, size: 14),
-                    const SizedBox(width: 8),
-                    const Text("EXPORT SETTINGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white38, fontSize: 10)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Audio Control Row
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.volume_off_rounded, color: Colors.grey, size: 16),
-                          SizedBox(width: 12),
-                          Text("MUTE AUDIO", 
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1, color: Colors.grey)),
-                        ],
-                      ),
-                      Switch(
-                        value: state.muteAudio,
-                        onChanged: (v) => state.setMuteAudio(v),
-                        activeColor: const Color(0xFFFF2D55),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Hardware Acceleration Row
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.bolt_rounded, color: Colors.grey, size: 16),
-                          SizedBox(width: 12),
-                          Text("HARDWARE ACCELERATION", 
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1, color: Colors.grey)),
-                        ],
-                      ),
-                      Switch(
-                        value: state.useHardwareAcceleration,
-                        onChanged: (v) => state.setUseHardwareAcceleration(v),
-                        activeColor: const Color(0xFFFF2D55),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Quality Segment Selection: Elite 3-Tier Chassis
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildQualityCard(context, state, "LOSSLESS TRUE", 0, "MASTER"),
-                      _buildQualityCard(context, state, "ELITE", 16, "PRO"),
-                      _buildQualityCard(context, state, "BALANCED", 23, "STD"),
-                    ],
-                  ),
-                ),
-                if (state.useHardwareAcceleration) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.1)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.bolt_rounded, color: Color(0xFF10B981), size: 14),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text("HARDWARE ACCELERATION ENABLED: Video will be exported using MediaCodec H.264 at a fast target 8 Mbps bitrate.", 
-                              style: TextStyle(color: Color(0xFF10B981), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else if (state.exportCrf == 0) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF2D55).withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.1)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.warning_amber_rounded, color: Color(0xFFFF2D55), size: 14),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text("WARNING: LOSSLESS TRUE creates extremely large files. Use only for master archiving.", 
-                              style: TextStyle(color: Color(0xFFFF2D55), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                        ),
-                      ],
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("DETECTED CLIPS (${state.scenes.length})",
+                      style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.grey)),
+                  TextButton(
+                    onPressed: () => state.setStatus("PREVIEW"),
+                    child: const Text("CLOSE", style: TextStyle(color: Color(0xFFFF3B30))),
                   ),
                 ],
-              ],
-            ),
+              ),
+              // Integrated Command Hub (Always Visible)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.02)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        const Icon(Icons.tune_rounded, color: Colors.white38, size: 14),
+                        const SizedBox(width: 8),
+                        const Text("EXPORT SETTINGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white38, fontSize: 10)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Audio Control Row
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.02)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.volume_off_rounded, color: Colors.grey, size: 16),
+                              SizedBox(width: 12),
+                              Text("MUTE AUDIO", 
+                                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1, color: Colors.grey)),
+                            ],
+                          ),
+                          Switch(
+                            value: state.muteAudio,
+                            onChanged: (v) => state.setMuteAudio(v),
+                            activeColor: const Color(0xFFFF3B30),
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Hardware Acceleration Row
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.02)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.bolt_rounded, color: Colors.grey, size: 16),
+                              SizedBox(width: 12),
+                              Text("HARDWARE ACCELERATION", 
+                                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1, color: Colors.grey)),
+                            ],
+                          ),
+                          Switch(
+                            value: state.useHardwareAcceleration,
+                            onChanged: (v) => state.setUseHardwareAcceleration(v),
+                            activeColor: const Color(0xFFFF3B30),
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Quality Segment Selection: Elite 3-Tier Chassis
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.02)),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildQualityCard(context, state, "LOSSLESS TRUE", 0, "MASTER"),
+                          _buildQualityCard(context, state, "ELITE", 16, "PRO"),
+                          _buildQualityCard(context, state, "BALANCED", 23, "STD"),
+                        ],
+                      ),
+                    ),
+                    if (state.useHardwareAcceleration) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.1)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.bolt_rounded, color: Color(0xFF10B981), size: 14),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text("HARDWARE ACCELERATION ENABLED: Video will be exported using MediaCodec H.264 at a fast target 8 Mbps bitrate.", 
+                                  style: TextStyle(color: Color(0xFF10B981), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (state.exportCrf == 0) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF3B30).withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.1)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: Color(0xFFFF3B30), size: 14),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text("WARNING: LOSSLESS TRUE creates extremely large files. Use only for master archiving.", 
+                                  style: TextStyle(color: Color(0xFFFF3B30), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text("Tip: Tap any clip to select it for export", 
+                  style: TextStyle(color: Colors.white24, fontSize: 10, fontStyle: FontStyle.italic)),
+              const SizedBox(height: 24),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text("Tip: Tap any clip to select it for export", 
-              style: TextStyle(color: Colors.white24, fontSize: 10, fontStyle: FontStyle.italic)),
-          const SizedBox(height: 24),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: state.aspectRatio * 0.9,
-            ),
-            itemCount: state.scenes.length,
-            itemBuilder: (context, index) {
+        ),
+        SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: state.aspectRatio * 0.9,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
               final scene = state.scenes[index];
               bool isSelected = state.selectedIndices.contains(index);
               return GestureDetector(
@@ -1730,15 +1843,15 @@ class AppNavigator extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0E131F),
+                    color: const Color(0xFF1A1D24),
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: isSelected ? [BoxShadow(color: const Color(0xFFFF2D55).withOpacity(0.3), blurRadius: 15, spreadRadius: 2)] : null,
+                    boxShadow: isSelected ? [BoxShadow(color: const Color(0xFFFF3B30).withOpacity(0.12), blurRadius: 20, spreadRadius: 0)] : null,
                   ),
                   foregroundDecoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFFFF2D55) : const Color(0xFF1E293B), 
-                      width: isSelected ? 2 : 1
+                      color: isSelected ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1E293B), 
+                      width: 1
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -1765,8 +1878,8 @@ class AppNavigator extends StatelessWidget {
                         top: 8, right: 8,
                         child: Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Color(0xFFFF2D55), shape: BoxShape.circle),
-                          child: const Icon(Icons.check_rounded, color: Colors.white, size: 12),
+                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          child: const Icon(Icons.check_rounded, color: Color(0xFFFF3B30), size: 12),
                         ),
                       ),
                       // Bottom Info Gradient
@@ -1787,12 +1900,12 @@ class AppNavigator extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF2D55).withOpacity(0.2),
+                            color: const Color(0xFFFF3B30).withOpacity(0.2),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.3)),
+                            border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.3)),
                           ),
                           child: Text("${(scene['end'] - scene['start']).toStringAsFixed(1)}s", 
-                              style: const TextStyle(color: Color(0xFFFF2D55), fontSize: 10, fontWeight: FontWeight.w900)),
+                              style: const TextStyle(color: Color(0xFFFF3B30), fontSize: 10, fontWeight: FontWeight.w900)),
                         ),
                       ),
                     ],
@@ -1800,10 +1913,13 @@ class AppNavigator extends StatelessWidget {
                 ),
               );
             },
+            childCount: state.scenes.length,
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+        const SliverToBoxAdapter(
+          child: const SizedBox(height: 24),
+        ),
+      ],
     );
   }
 
@@ -1850,9 +1966,9 @@ class AppNavigator extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withOpacity(0.02)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1916,17 +2032,59 @@ class AppNavigator extends StatelessWidget {
 
           _buildPortalAction(
             icon: Icons.photo_library_rounded,
-            title: "SAVE TO GALLERY",
-            desc: "Save clips directly to your phone",
+            title: "SAVE TO PHOTOS",
+            desc: "Save clips to Photos album / Camera Roll",
             onTap: () async {
-              for (var path in state.lastExportedPaths) {
-                await Gal.putVideo(path, album: "CFX SCP");
-              }
-              if (context.mounted) {
-                _showPremiumSnackBar(context, "SAVED TO PHONE GALLERY");
+              if (state.lastExportedPaths.isEmpty) return;
+              try {
+                final hasAccess = await Gal.hasAccess();
+                if (!hasAccess) {
+                  final granted = await Gal.requestAccess();
+                  if (!granted) {
+                    if (context.mounted) {
+                      _showPremiumSnackBar(context, "PHOTOS ACCESS NOT GRANTED", isError: true);
+                    }
+                    return;
+                  }
+                }
+                int savedCount = 0;
+                for (var path in state.lastExportedPaths) {
+                  if (path.toLowerCase().endsWith('.mkv')) continue;
+                  await Gal.putVideo(path, album: "CFX SCP");
+                  savedCount++;
+                }
+                if (context.mounted) {
+                  if (savedCount > 0) {
+                    _showPremiumSnackBar(context, "SAVED $savedCount CLIPS TO PHOTOS");
+                  } else {
+                    _showPremiumSnackBar(context, "MKV cannot be saved to Photos. Use 'SAVE TO FILES'.", isError: true);
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  _showPremiumSnackBar(context, "FAILED TO SAVE TO PHOTOS: $e", isError: true);
+                }
               }
             },
             color: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 16),
+          _buildPortalAction(
+            icon: Icons.folder_zip_rounded,
+            title: "SAVE TO FILES / SHARE",
+            desc: "Save to iOS Files app, iCloud Drive, or AirDrop",
+            onTap: () async {
+              if (state.lastExportedPaths.isEmpty) return;
+              try {
+                final files = state.lastExportedPaths.map((p) => XFile(p)).toList();
+                await Share.shareXFiles(files, text: "ScenePack Exported Clips");
+              } catch (e) {
+                if (context.mounted) {
+                  _showPremiumSnackBar(context, "SHARE FAILED: $e", isError: true);
+                }
+              }
+            },
+            color: const Color(0xFF3B82F6),
           ),
           const SizedBox(height: 16),
           if (!state.isDriveConnected)
@@ -1969,10 +2127,10 @@ class AppNavigator extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)]),
+              gradient: const LinearGradient(colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)]),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFF2D55).withOpacity(0.25),
+                  color: const Color(0xFFFF3B30).withOpacity(0.25),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 )
@@ -1998,137 +2156,146 @@ class AppNavigator extends StatelessWidget {
 
   void _showWifiSyncPanel(BuildContext context, AppState state) {
     state.startLocalServer();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0C0E17),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        side: BorderSide(color: Colors.white10),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return AnimatedBuilder(
           animation: state,
           builder: (context, child) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  const Icon(Icons.wifi_rounded, size: 36, color: Color(0xFF10B981)),
-                  const SizedBox(height: 8),
-                  const Text("DESKTOP WI-FI SYNC", 
-                    style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  const Text("Make sure both devices are on the same Wi-Fi network", 
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w500)),
-                  
-                  const SizedBox(height: 16),
-
-                  if (state.localServerUrl == null)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                      ),
-                    )
-                  else ...[
+            return CustomPaint(
+              painter: SheetBorderPainter(
+                fillColor: const Color(0xFF1B1F27),
+                borderColor: Colors.white.withOpacity(0.02),
+                borderWidth: 1,
+                borderRadius: 32,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          'https://api.qrserver.com/v1/create-qr-code/?size=120x120&color=10B981&bgcolor=080A10&data=${Uri.encodeComponent(state.localServerUrl!)}',
-                          width: 120,
-                          height: 120,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 120,
-                              height: 120,
-                              color: Colors.white.withOpacity(0.02),
-                              child: const Icon(Icons.qr_code_2_rounded, size: 48, color: Colors.white10),
-                            );
-                          },
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    const Icon(Icons.wifi_rounded, size: 36, color: Color(0xFF10B981)),
+                    const SizedBox(height: 8),
+                    const Text("DESKTOP WI-FI SYNC", 
+                      style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 14)),
+                    const SizedBox(height: 4),
+                    const Text("Make sure both devices are on the same Wi-Fi network", 
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w600)),
+                    
+                    const SizedBox(height: 20),
+                    
+                    if (state.localServerUrl == null) ...[
+                      const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981)),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              state.localServerUrl!,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                color: Color(0xFF10B981),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.copy_rounded, color: Colors.white38, size: 18),
-                            onPressed: () {
-                              Clipboard.setData(ClipboardData(text: state.localServerUrl!));
-                              _showPremiumSnackBar(context, "URL COPIED TO CLIPBOARD");
+                      const SizedBox(height: 12),
+                      const Text("FETCHING NETWORK CONFIG...", 
+                        style: TextStyle(color: Colors.white30, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    ] else ...[
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(0.02)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${Uri.encodeComponent(state.localServerUrl!)}&color=10B981&bgcolor=0C0E17",
+                            width: 130,
+                            height: 130,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return const SizedBox(
+                                width: 130,
+                                height: 130,
+                                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981))),
+                              );
                             },
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text("Type this URL in your computer's browser to download clips",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-                  ],
-                  const SizedBox(height: 16),
-                  
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.03),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: Color(0xFF1E293B)),
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text("STOP SYNCING", 
-                        style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.06)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SelectableText(
+                                  state.localServerUrl!,
+                                  style: const TextStyle(color: Color(0xFF10B981), fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.copy_rounded, color: Colors.white.withOpacity(0.5), size: 18),
+                                onPressed: () {
+                                  Clipboard.setData(ClipboardData(text: state.localServerUrl!));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("SYNC URL COPIED"),
+                                      backgroundColor: Color(0xFF1B1F27),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text("Type this URL in your computer's browser to download clips",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
+                    ],
+                    const SizedBox(height: 16),
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.03),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFF1E293B)),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text("STOP SYNCING", 
+                          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                ],
+                    const SizedBox(height: 4),
+                  ],
+                ),
               ),
             );
           },
@@ -2143,10 +2310,10 @@ class AppNavigator extends StatelessWidget {
     final bool isGrey = color == Colors.white12;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isGrey ? Colors.white.withOpacity(0.08) : color.withOpacity(0.2),
+          color: isGrey ? Colors.white.withOpacity(0.02) : color.withOpacity(0.2),
         ),
       ),
       child: InkWell(
@@ -2188,7 +2355,7 @@ class AppNavigator extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)]),
+        gradient: const LinearGradient(colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)]),
       ),
       child: ElevatedButton(
         onPressed: onPressed,
@@ -2206,19 +2373,19 @@ class AppNavigator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04), 
-            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
+            color: Colors.white.withOpacity(0.06), 
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.02))),
           ),
           child: Row(
             children: [
-              Expanded(child: Text("${state.selectedIndices.length} SELECTED", style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF2D55)))),
+              Expanded(child: Text("${state.selectedIndices.length} SELECTED", style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF3B30)))),
               const SizedBox(width: 8),
               ElevatedButton(
                 onPressed: state.selectedIndices.isEmpty ? null : () async {
                   await state.performExport();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF2D55), 
+                  backgroundColor: const Color(0xFFFF3B30), 
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -2238,11 +2405,11 @@ class AppNavigator extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFFF2D55).withOpacity(0.08), 
+          color: const Color(0xFFFF3B30).withOpacity(0.08), 
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.15)),
+          border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.15)),
         ),
-        child: Text(label, style: const TextStyle(color: Color(0xFFFF2D55), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
+        child: Text(label, style: const TextStyle(color: Color(0xFFFF3B30), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
       ),
     );
   }
@@ -2261,9 +2428,9 @@ class AppNavigator extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFF2D55).withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? const Color(0xFFFF3B30).withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isLocked ? Colors.white.withOpacity(0.08) : (isSelected ? const Color(0xFFFF2D55) : Colors.white.withOpacity(0.08))),
+            border: Border.all(color: isLocked ? Colors.white.withOpacity(0.02) : (isSelected ? const Color(0xFFFF3B30).withOpacity(0.3) : Colors.white.withOpacity(0.02))),
           ),
           child: Column(
             children: [
@@ -2278,7 +2445,7 @@ class AppNavigator extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(crf == 0 ? "RAW" : "CRF $crf", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isLocked ? Colors.white24 : (isSelected ? const Color(0xFFFF2D55) : Colors.white24))),
+              Text(crf == 0 ? "RAW" : "CRF $crf", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isLocked ? Colors.white24 : (isSelected ? const Color(0xFFFF3B30) : Colors.white24))),
             ],
           ),
         ),
@@ -2297,9 +2464,9 @@ class AppNavigator extends StatelessWidget {
     
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.02)),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -2339,7 +2506,7 @@ class AppNavigator extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.2),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withOpacity(0.02)),
             ),
             child: Row(
               children: [
@@ -2348,10 +2515,10 @@ class AppNavigator extends StatelessWidget {
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: state.hasUpdate ? const Color(0xFFFF2D55) : const Color(0xFF10B981),
+                    color: state.hasUpdate ? const Color(0xFFFF3B30) : const Color(0xFF10B981),
                     boxShadow: [
                       BoxShadow(
-                        color: (state.hasUpdate ? const Color(0xFFFF2D55) : const Color(0xFF10B981)).withOpacity(0.4),
+                        color: (state.hasUpdate ? const Color(0xFFFF3B30) : const Color(0xFF10B981)).withOpacity(0.4),
                         blurRadius: 8,
                         spreadRadius: 2,
                       ),
@@ -2365,7 +2532,7 @@ class AppNavigator extends StatelessWidget {
                     children: [
                       Text(state.hasUpdate ? "NEW BUILD FOUND" : "SYSTEM UP TO DATE", 
                         style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 11, 
-                          color: state.hasUpdate ? const Color(0xFFFF2D55) : const Color(0xFF10B981))),
+                          color: state.hasUpdate ? const Color(0xFFFF3B30) : const Color(0xFF10B981))),
                       const SizedBox(height: 4),
                       Text(state.hasUpdate ? "STABLE BUILD $latestVer IS READY FOR DEPLOYMENT" : "YOU ARE RUNNING THE LATEST OPTIMIZED VERSION", 
                         style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4), fontWeight: FontWeight.w600)),
@@ -2373,7 +2540,7 @@ class AppNavigator extends StatelessWidget {
                   ),
                 ),
                 if (state.hasUpdate)
-                  const Text("CRITICAL", style: TextStyle(color: Color(0xFFFF2D55), fontWeight: FontWeight.w900, fontSize: 8, letterSpacing: 1)),
+                  const Text("CRITICAL", style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.w900, fontSize: 8, letterSpacing: 1)),
               ],
             ),
           ),
@@ -2390,7 +2557,7 @@ class AppNavigator extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withOpacity(0.02)),
               ),
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -2405,7 +2572,7 @@ class AppNavigator extends StatelessWidget {
                           const Text(
                             "» ",
                             style: TextStyle(
-                              color: Color(0xFFFF2D55),
+                              color: Color(0xFFFF3B30),
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -2450,7 +2617,7 @@ class AppNavigator extends StatelessWidget {
             children: [
               const Text("DOWNLOADING SYSTEM UPDATE...", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white24, fontSize: 8, letterSpacing: 1)),
               Text("${(state.downloadProgress * 100).toInt()}%", 
-                style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF2D55), fontSize: 13, letterSpacing: 0.5)),
+                style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFFF3B30), fontSize: 13, letterSpacing: 0.5)),
             ],
           ),
           const SizedBox(height: 12),
@@ -2460,7 +2627,7 @@ class AppNavigator extends StatelessWidget {
               value: state.downloadProgress,
               minHeight: 6,
               backgroundColor: Colors.white.withOpacity(0.05),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF2D55)),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF3B30)),
             ),
           ),
         ],
@@ -2482,7 +2649,7 @@ class AppNavigator extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: useGradient
-            ? const LinearGradient(colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)])
+            ? const LinearGradient(colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)])
             : null,
         color: useGradient ? null : Colors.white.withOpacity(0.03),
         border: useGradient
@@ -2490,7 +2657,7 @@ class AppNavigator extends StatelessWidget {
             : Border.all(color: const Color(0xFF1E293B)),
         boxShadow: useGradient ? [
           BoxShadow(
-            color: const Color(0xFFFF2D55).withOpacity(0.25),
+            color: const Color(0xFFFF3B30).withOpacity(0.25),
             blurRadius: 16,
             offset: const Offset(0, 4),
           )
@@ -2529,9 +2696,9 @@ class AppNavigator extends StatelessWidget {
           child: Container(
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withOpacity(0.06),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.2),
+              border: Border.all(color: Colors.white.withOpacity(0.02), width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.4),
@@ -2598,13 +2765,13 @@ class AppNavigator extends StatelessWidget {
               width: isActive ? 16 : 0,
               height: 2,
               decoration: BoxDecoration(
-                color: const Color(0xFFFF2D55),
+                color: const Color(0xFFFF3B30),
                 borderRadius: BorderRadius.circular(1),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF2D55).withOpacity(0.5),
-                    blurRadius: 4,
-                    spreadRadius: 0.5,
+                    color: const Color(0xFFFF3B30).withOpacity(0.35),
+                    blurRadius: 3,
+                    spreadRadius: 0,
                   ),
                 ],
               ),
@@ -2615,7 +2782,7 @@ class AppNavigator extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: isActive ? const Color(0xFFFF2D55) : Colors.white24,
+                  color: isActive ? const Color(0xFFFF3B30) : Colors.white24,
                   size: 20,
                 ),
                 if (showDot)
@@ -2626,10 +2793,10 @@ class AppNavigator extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF2D55),
+                        color: const Color(0xFFFF3B30),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xFF05070E),
+                          color: const Color(0xFF0D0F14),
                           width: 1.5,
                         ),
                       ),
@@ -2678,9 +2845,9 @@ class AccountPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withOpacity(0.06),
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withOpacity(0.02)),
             ),
             child: Column(
               children: [
@@ -2691,11 +2858,11 @@ class AccountPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF38121E).withOpacity(0.3),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.3), width: 1.5),
+                    border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.3), width: 1.5),
                   ),
                   child: const Icon(
                     Icons.person_outline_rounded,
-                    color: Color(0xFFFF2D55),
+                    color: Color(0xFFFF3B30),
                     size: 44,
                   ),
                 ),
@@ -2737,15 +2904,15 @@ class AccountPage extends StatelessWidget {
                   _buildBadge(
                     text: "FREE TRIAL (${state.trialDaysRemaining}D LEFT)",
                     bgColor: const Color(0xFF1C142A),
-                    borderColor: const Color(0xFFFF2D55),
-                    textColor: const Color(0xFFFF2D55),
+                    borderColor: const Color(0xFFFF3B30),
+                    textColor: const Color(0xFFFF3B30),
                   ),
                 ] else ...[
                   _buildBadge(
-                    text: "EXPIRED ACCESS",
-                    bgColor: const Color(0xFF1C1C1C),
-                    borderColor: Colors.white24,
-                    textColor: Colors.white38,
+                    text: state.isTrialUsedOnAnotherEmail ? "TRIAL ALREADY USED" : "EXPIRED ACCESS",
+                    bgColor: state.isTrialUsedOnAnotherEmail ? const Color(0xFF2C1014) : const Color(0xFF1C1C1C),
+                    borderColor: state.isTrialUsedOnAnotherEmail ? const Color(0xFFFF3B30).withOpacity(0.5) : Colors.white24,
+                    textColor: state.isTrialUsedOnAnotherEmail ? const Color(0xFFFF3B30) : Colors.white38,
                   ),
                 ],
               ],
@@ -2757,9 +2924,9 @@ class AccountPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withOpacity(0.06),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withOpacity(0.02)),
             ),
             child: Row(
               children: [
@@ -2772,7 +2939,7 @@ class AccountPage extends StatelessWidget {
                         ? const Color(0xFF10B981).withOpacity(0.08) 
                         : (hasTrial 
                             ? Colors.blue.withOpacity(0.08) 
-                            : const Color(0xFFFF2D55).withOpacity(0.08)),
+                            : const Color(0xFFFF3B30).withOpacity(0.08)),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -2781,7 +2948,7 @@ class AccountPage extends StatelessWidget {
                         : (hasTrial ? Icons.info_outline_rounded : Icons.lock_outline_rounded),
                     color: hasPremium 
                         ? const Color(0xFF10B981) 
-                        : (hasTrial ? Colors.blue : const Color(0xFFFF2D55)),
+                        : (hasTrial ? Colors.blue : const Color(0xFFFF3B30)),
                     size: 24,
                   ),
                 ),
@@ -2793,7 +2960,11 @@ class AccountPage extends StatelessWidget {
                       Text(
                         hasPremium 
                             ? "Unlimited Workstation Access" 
-                            : (hasTrial ? "Standard Trial Access" : "Restricted Access Mode"),
+                            : (hasTrial 
+                                ? "Standard Trial Access" 
+                                : (state.isTrialUsedOnAnotherEmail 
+                                    ? "Trial Expired / Blocked" 
+                                    : "Restricted Access Mode")),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -2806,7 +2977,9 @@ class AccountPage extends StatelessWidget {
                             ? "Enjoy unlimited cuts, lossless exports, and cloud backups."
                             : (hasTrial 
                                 ? "${state.dailyScansUsed} of ${state.maxDailyScans} daily scans used today."
-                                : "Your trial has expired. Upgrade to PRO to resume unlimited cuts."),
+                                : (state.isTrialUsedOnAnotherEmail
+                                    ? "Free trial already used on another email on this device. Upgrade to PRO to unlock."
+                                    : "Your trial has expired. Upgrade to PRO to resume unlimited cuts.")),
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.35),
                           fontSize: 10,
@@ -2827,9 +3000,9 @@ class AccountPage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF2D55).withOpacity(0.06),
+                color: const Color(0xFFFF3B30).withOpacity(0.06),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.35), width: 1.2),
+                border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.35), width: 1.2),
               ),
               child: Row(
                 children: [
@@ -2837,11 +3010,11 @@ class AccountPage extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF2D55).withOpacity(0.12),
+                      color: const Color(0xFFFF3B30).withOpacity(0.12),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFFF2D55).withOpacity(0.25)),
+                      border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.25)),
                     ),
-                    child: const Icon(Icons.bolt_rounded, color: Color(0xFFFF2D55), size: 24),
+                    child: const Icon(Icons.bolt_rounded, color: Color(0xFFFF3B30), size: 24),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -2856,7 +3029,9 @@ class AccountPage extends StatelessWidget {
                         Text(
                           hasTrial
                               ? "Unlock unlimited scans, lossless export & cloud backup."
-                              : "Your trial has expired — restore full access now.",
+                              : (state.isTrialUsedOnAnotherEmail
+                                  ? "Free trial already used on another email — upgrade now."
+                                  : "Your trial has expired — restore full access now."),
                           style: const TextStyle(color: Colors.white38, fontSize: 10, height: 1.4),
                         ),
                       ],
@@ -2866,7 +3041,7 @@ class AccountPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF2D55),
+                      color: const Color(0xFFFF3B30),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Text(
@@ -2883,9 +3058,9 @@ class AccountPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withOpacity(0.06),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withOpacity(0.02)),
             ),
             child: Row(
               children: [
@@ -2974,9 +3149,9 @@ class AccountPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withOpacity(0.02)),
               ),
               child: Row(
                 children: [
@@ -2984,12 +3159,12 @@ class AccountPage extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF2D55).withOpacity(0.08),
+                      color: const Color(0xFFFF3B30).withOpacity(0.08),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.phonelink_erase_rounded,
-                      color: Color(0xFFFF2D55),
+                      color: Color(0xFFFF3B30),
                       size: 20,
                     ),
                   ),
@@ -3021,6 +3196,7 @@ class AccountPage extends StatelessWidget {
                   TextButton(
                     onPressed: () async {
                       final success = await state.deregisterDevice();
+                      if (!context.mounted) return;
                       if (success) {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                           content: Text("DEVICE DEREGISTERED SUCCESSFULLY"),
@@ -3029,16 +3205,16 @@ class AccountPage extends StatelessWidget {
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                           content: Text("FAILED TO DEREGISTER DEVICE"),
-                          backgroundColor: Color(0xFFFF2D55),
+                          backgroundColor: Color(0xFFFF3B30),
                         ));
                       }
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF2D55),
+                      foregroundColor: const Color(0xFFFF3B30),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: const Color(0xFFFF2D55).withOpacity(0.2)),
+                        side: BorderSide(color: const Color(0xFFFF3B30).withOpacity(0.2)),
                       ),
                     ),
                     child: const Text("UNBIND", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5)),
@@ -3058,7 +3234,7 @@ class AccountPage extends StatelessWidget {
               icon: const Icon(Icons.exit_to_app_rounded, size: 18),
               label: const Text("Sign Out", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5, fontSize: 14)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF2D55),
+                backgroundColor: const Color(0xFFFF3B30),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -3180,9 +3356,9 @@ class SettingsPage extends StatelessWidget {
   Widget _buildSettingsCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.white.withOpacity(0.02), width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -3191,11 +3367,209 @@ class SettingsPage extends StatelessWidget {
             for (int i = 0; i < children.length; i++) ...[
               children[i],
               if (i < children.length - 1)
-                Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.04), indent: 68, endIndent: 0),
+                Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.06), indent: 68, endIndent: 0),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  void _showDeveloperLogs(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            final logs = AppState.developerLogs.join("\n");
+            return CustomPaint(
+              painter: SheetBorderPainter(
+                fillColor: const Color(0xFF1B1F27),
+                borderColor: Colors.white.withOpacity(0.02),
+                borderWidth: 1,
+                borderRadius: 24,
+              ),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.85,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.terminal_rounded, color: Color(0xFFFF3B30), size: 20),
+                              SizedBox(width: 10),
+                              Text(
+                                "SYSTEM LOGS",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.copy_rounded, color: Colors.white60, size: 20),
+                                onPressed: () {
+                                  Clipboard.setData(ClipboardData(text: logs));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("LOGS COPIED TO CLIPBOARD"),
+                                      backgroundColor: Color(0xFF1B1F27),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
+                                tooltip: "Copy Logs",
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.refresh_rounded, color: Colors.white60, size: 20),
+                                onPressed: () {
+                                  setState(() {});
+                                },
+                                tooltip: "Refresh Logs",
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, color: Colors.white60, size: 20),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: Colors.white.withOpacity(0.02)),
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(0.06)),
+                        ),
+                        child: logs.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  "No logs captured yet.",
+                                  style: TextStyle(color: Colors.white30, fontSize: 11),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: SelectableText(
+                                  logs,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontFamily: 'monospace',
+                                    fontSize: 10,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
+                      child: Text(
+                        "These logs capture runtime operations, system checks, and exceptions to assist in diagnostics.",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.25),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showWorkstationGuideSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return CustomPaint(
+          painter: SheetBorderPainter(
+            fillColor: const Color(0xFF1B1F27),
+            borderColor: Colors.white.withOpacity(0.02),
+            borderWidth: 1,
+            borderRadius: 24,
+          ),
+          child: Container(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.tune_rounded, color: Color(0xFFFF3B30), size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            "WORKSTATION GUIDE",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.white60, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: Colors.white.withOpacity(0.02)),
+                const SizedBox(height: 12),
+                _buildInstructionItem("1", "Use ACTION (0.32) for fast-paced edits, sports, or reels with high motion."),
+                Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.02), indent: 52),
+                _buildInstructionItem("2", "Use SENSITIVE (0.15) for cinematic, stable, or tripod shots to catch subtle transitions."),
+                Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.02), indent: 52),
+                _buildInstructionItem("3", "Use BALANCED (0.23) for standard movies, music videos, and general content."),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -3211,7 +3585,7 @@ class SettingsPage extends StatelessWidget {
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)],
+                colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -3249,7 +3623,7 @@ class SettingsPage extends StatelessWidget {
                 state.clearUpdateNotification();
                 state.setStatus("UPDATE");
               },
-              color: state.hasUpdateNotification ? const Color(0xFFFF2D55) : Colors.white24,
+              color: state.hasUpdateNotification ? const Color(0xFFFF3B30) : Colors.white24,
             ),
             _buildSettingsTile(
               Icons.delete_sweep_rounded,
@@ -3264,14 +3638,14 @@ class SettingsPage extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0C0E17),
+                          color: const Color(0xFF1B1F27),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withOpacity(0.08)),
+                          border: Border.all(color: Colors.white.withOpacity(0.02)),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF2D55))),
+                            CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF3B30))),
                             SizedBox(width: 20),
                             Text("Clearing cache...", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
                           ],
@@ -3303,12 +3677,12 @@ class SettingsPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        backgroundColor: const Color(0xFF0C0E17),
+                        backgroundColor: const Color(0xFF1B1F27),
                         behavior: SnackBarBehavior.floating,
                         margin: const EdgeInsets.all(20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: const Color(0xFFFF2D55).withOpacity(0.35), width: 1),
+                          side: BorderSide(color: const Color(0xFFFF3B30).withOpacity(0.35), width: 1),
                         ),
                         elevation: 6,
                       ),
@@ -3323,8 +3697,8 @@ class SettingsPage extends StatelessWidget {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(color: const Color(0xFFFF2D55).withOpacity(0.12), shape: BoxShape.circle),
-                              child: const Icon(Icons.close_rounded, color: Color(0xFFFF2D55), size: 14),
+                              decoration: BoxDecoration(color: const Color(0xFFFF3B30).withOpacity(0.12), shape: BoxShape.circle),
+                              child: const Icon(Icons.close_rounded, color: Color(0xFFFF3B30), size: 14),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -3335,12 +3709,12 @@ class SettingsPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        backgroundColor: const Color(0xFF0C0E17),
+                        backgroundColor: const Color(0xFF1B1F27),
                         behavior: SnackBarBehavior.floating,
                         margin: const EdgeInsets.all(20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: const Color(0xFFFF2D55).withOpacity(0.35), width: 1),
+                          side: BorderSide(color: const Color(0xFFFF3B30).withOpacity(0.35), width: 1),
                         ),
                         elevation: 6,
                       ),
@@ -3348,7 +3722,14 @@ class SettingsPage extends StatelessWidget {
                   }
                 }
               },
-              color: const Color(0xFFFF2D55),
+              color: const Color(0xFFFF3B30),
+            ),
+            _buildSettingsTile(
+              Icons.menu_book_rounded,
+              "WORKSTATION GUIDE",
+              "Learn how to configure scene detection thresholds",
+              () => _showWorkstationGuideSheet(context),
+              color: const Color(0xFFFF3B30),
             ),
             _buildSettingsTile(
               Icons.bug_report_rounded,
@@ -3357,28 +3738,17 @@ class SettingsPage extends StatelessWidget {
               () => launchUrl(Uri.parse("https://cfxstudios.in//report-issue"), mode: LaunchMode.externalApplication),
               color: const Color(0xFFFFAA00),
             ),
+            if (state.currentUser?.email.toLowerCase() == 'dilipkumar16398@gmail.com')
+              _buildSettingsTile(
+                Icons.terminal_rounded,
+                "DEVELOPER LOGS",
+                "View app runtime logs, trace records, and errors",
+                () {
+                  _showDeveloperLogs(context);
+                },
+                color: Colors.white24,
+              ),
           ]),
-          const SizedBox(height: 28),
-
-          // ── Workstation Guide ────────────────────────────
-          _buildSectionHeader("WORKSTATION GUIDE", Icons.tune_rounded, const Color(0xFFFF2D55)),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-            ),
-            child: Column(
-              children: [
-                _buildInstructionItem("1", "Use ACTION (0.32) for fast-paced edits, sports, or reels with high motion."),
-                Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.04), indent: 52),
-                _buildInstructionItem("2", "Use SENSITIVE (0.15) for cinematic, stable, or tripod shots to catch subtle transitions."),
-                Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.04), indent: 52),
-                _buildInstructionItem("3", "Use BALANCED (0.23) for standard movies, music videos, and general content."),
-              ],
-            ),
-          ),
           const SizedBox(height: 28),
 
           // ── Support & Links ──────────────────────────────
@@ -3386,26 +3756,55 @@ class SettingsPage extends StatelessWidget {
           const SizedBox(height: 12),
           _buildSettingsCard([
             _buildSettingsTile(
+              Icons.menu_book_rounded,
+              "VIEW DOCUMENTATION",
+              "User manual and step-by-step guides",
+              () => launchUrl(Uri.parse("https://cfxstudios.in/docs"), mode: LaunchMode.externalApplication),
+              color: const Color(0xFFFF3B30),
+            ),
+            _buildSettingsTile(
               Icons.send_rounded,
-              "TELEGRAM CHAT",
-              "Message @cfxstudios for instant support",
-              () => launchUrl(Uri.parse("https://t.me/cfxstudios"), mode: LaunchMode.externalApplication),
+              "TELEGRAM CHANNEL",
+              "Join @CFXStudiosUpdates for official news",
+              () => launchUrl(Uri.parse("https://t.me/CFXStudiosUpdates"), mode: LaunchMode.externalApplication),
               color: const Color(0xFF229ED9),
+            ),
+            _buildSettingsTile(
+              Icons.discord,
+              "DISCORD SERVER",
+              "Join our Discord community",
+              () => launchUrl(Uri.parse("https://discord.gg/PdVsEPrwp"), mode: LaunchMode.externalApplication),
+              color: const Color(0xFF5865F2),
             ),
             _buildSettingsTile(
               Icons.mail_outline_rounded,
               "EMAIL SUPPORT",
               "dilipparvee@gmail.com",
               () => launchUrl(Uri.parse("mailto:dilipparvee@gmail.com")),
-              color: const Color(0xFFFF2D55),
+              color: const Color(0xFFFF3B30),
             ),
             _buildSettingsTile(
               Icons.language_rounded,
-              "EXPLORE PRODUCTS",
+              "CFX SCP",
               "Visit our official website cfxstudios.in",
               () => launchUrl(Uri.parse("https://cfxstudios.in"), mode: LaunchMode.externalApplication),
               color: const Color(0xFF10B981),
             ),
+            _buildSettingsTile(
+              Icons.cloud_download_rounded,
+              "CFX FETCH",
+              "Video downloader, converter, and compressor",
+              () => launchUrl(Uri.parse("https://fetch.cfxstudios.in/"), mode: LaunchMode.externalApplication),
+              color: const Color(0xFF3B82F6),
+            ),
+            _buildSettingsTile(
+              Icons.video_library_rounded,
+              "GET SCENEPACKS",
+              "Download 4k scenepacks",
+              () => launchUrl(Uri.parse("https://hub.cfxstudios.in"), mode: LaunchMode.externalApplication),
+              color: const Color(0xFFEC4899),
+            ),
+
           ]),
           const SizedBox(height: 28),
 
@@ -3420,12 +3819,13 @@ class SettingsPage extends StatelessWidget {
                 "Removes premium license status locally",
                 () async {
                   await state.resetEliteAccess();
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("ELITE ACCESS RESET"),
-                    backgroundColor: Color(0xFFFF2D55),
+                    backgroundColor: Color(0xFFFF3B30),
                   ));
                 },
-                color: const Color(0xFFFF2D55),
+                color: const Color(0xFFFF3B30),
               ),
               _buildSettingsTile(
                 Icons.refresh_rounded,
@@ -3433,6 +3833,7 @@ class SettingsPage extends StatelessWidget {
                 "Resets today's scan usage count",
                 () async {
                   await state.resetDailyUsage();
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("DAILY USAGE RESET"),
                     backgroundColor: Color(0xFF10B981),
@@ -3447,6 +3848,7 @@ class SettingsPage extends StatelessWidget {
                 () async {
                   final Directory tempDir = await getTemporaryDirectory();
                   if (await tempDir.exists()) await tempDir.delete(recursive: true);
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("SYSTEM REBOOTED"),
                     backgroundColor: Colors.blue,
@@ -3494,16 +3896,121 @@ class _PickerButton extends StatefulWidget {
 class _PickerButtonState extends State<_PickerButton> {
   bool _isLoading = false;
 
+  Future<void> _handleVideoImport(BuildContext context) async {
+    final String? source = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF161824),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.video_library_rounded, color: Color(0xFFFF3B30), size: 22),
+                  SizedBox(width: 10),
+                  Text(
+                    "IMPORT VIDEO",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Choose where to import your video from:",
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                tileColor: const Color(0xFF1E2132),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF10B981), size: 28),
+                title: const Text("Photo Library / Camera Roll", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text("Import videos saved in Photos app", style: TextStyle(color: Colors.white38, fontSize: 11)),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+                onTap: () => Navigator.pop(ctx, "PHOTOS"),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                tileColor: const Color(0xFF1E2132),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                leading: const Icon(Icons.folder_open_rounded, color: Color(0xFF3B82F6), size: 28),
+                title: const Text("Files & iCloud Drive", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text("Browse Files app (MKV, MP4, MOV)", style: TextStyle(color: Colors.white38, fontSize: 11)),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+                onTap: () => Navigator.pop(ctx, "FILES"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      debugPrint("ENGINE: User selected import source: $source");
+      FilePickerResult? result;
+      if (source == "PHOTOS") {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.video,
+          allowCompression: false,
+        );
+      } else {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mp4', 'mov', 'mkv', 'avi', 'm4v', 'webm', 'ts', 'flv'],
+          allowCompression: false,
+        );
+      }
+
+      if (result != null && result.files.single.path != null) {
+        debugPrint("ENGINE: Video selected: ${result.files.single.path}");
+        widget.onVideoSelected(result.files.single.path!);
+      } else {
+        debugPrint("ENGINE: Picker returned null (User cancelled or no access)");
+      }
+    } catch (e) {
+      debugPrint("ENGINE ERROR: $e");
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF161824),
+            title: const Text("IMPORT ERROR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            content: Text("Media import failed. Error: $e", style: const TextStyle(color: Colors.white70)),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK", style: TextStyle(color: Color(0xFFFF3B30))))],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: const LinearGradient(
-          colors: [Color(0xFFFF2D55), Color(0xFFD81B4B)],
+          colors: [Color(0xFFFF4A3D), Color(0xFFD92A20)],
         ),
         boxShadow: [
-          BoxShadow(color: const Color(0xFFFF2D55).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: const Color(0xFFFF3B30).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Consumer<AppState>(
@@ -3517,38 +4024,7 @@ class _PickerButtonState extends State<_PickerButton> {
                 ? null 
                 : (isLocked 
                     ? () => AppNavigator.showActivationPortal(context, state) 
-                    : () async {
-                        setState(() => _isLoading = true);
-                        try {
-                          debugPrint("ENGINE: User clicked SELECT VIDEO");
-                          
-                          FilePickerResult? result = await FilePicker.platform.pickFiles(
-                            type: FileType.video,
-                            allowCompression: false,
-                          );
-                          
-                          if (result != null && result.files.single.path != null) {
-                            debugPrint("ENGINE: Video selected: ${result.files.single.path}");
-                            widget.onVideoSelected(result.files.single.path!);
-                          } else {
-                            debugPrint("ENGINE: Picker returned null (User cancelled or no access)");
-                          }
-                        } catch (e) {
-                           debugPrint("ENGINE ERROR: $e");
-                           if (mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("IMPORT ERROR"),
-                                  content: Text("Your phone blocked the media import engine. Error: $e"),
-                                  actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK"))],
-                                ),
-                              );
-                           }
-                        } finally {
-                          if (mounted) setState(() => _isLoading = false);
-                        }
-                      }),
+                    : () => _handleVideoImport(context)),
             icon: _isLoading 
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Icon(isLocked ? Icons.lock_rounded : Icons.add_rounded),
@@ -3643,7 +4119,7 @@ class _StudioMasterPlayerState extends State<_StudioMasterPlayer> {
               VideoProgressIndicator(_controller, 
                 allowScrubbing: true, 
                 colors: const VideoProgressColors(
-                  playedColor: Color(0xFFFF2D55),
+                  playedColor: Color(0xFFFF3B30),
                   bufferedColor: Colors.white24,
                   backgroundColor: Colors.black45,
                 ),
@@ -3657,7 +4133,7 @@ class _StudioMasterPlayerState extends State<_StudioMasterPlayer> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF0E131F),
+              color: const Color(0xFF1A1D24),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFF1E293B)),
             ),
@@ -3694,13 +4170,13 @@ class _JogButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF080A10),
+          color: const Color(0xFF0E1015),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFF1E293B)),
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFFFF2D55), size: 20),
+            Icon(icon, color: const Color(0xFFFF3B30), size: 20),
             Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey)),
           ],
         ),
@@ -3739,9 +4215,9 @@ class _JogDialState extends State<_JogDial> {
           gradient: LinearGradient(
             colors: [
               Colors.transparent,
-              const Color(0xFFFF2D55).withOpacity(0.05),
-              const Color(0xFFFF2D55).withOpacity(0.1),
-              const Color(0xFFFF2D55).withOpacity(0.05),
+              const Color(0xFFFF3B30).withOpacity(0.05),
+              const Color(0xFFFF3B30).withOpacity(0.1),
+              const Color(0xFFFF3B30).withOpacity(0.05),
               Colors.transparent,
             ],
           ),
@@ -3763,8 +4239,8 @@ class _JogDialState extends State<_JogDial> {
               width: 2,
               height: 30,
               decoration: BoxDecoration(
-                color: const Color(0xFFFF2D55),
-                boxShadow: [BoxShadow(color: const Color(0xFFFF2D55).withOpacity(0.5), blurRadius: 8)],
+                color: const Color(0xFFFF3B30),
+                boxShadow: [BoxShadow(color: const Color(0xFFFF3B30).withOpacity(0.5), blurRadius: 8)],
               ),
             ),
           ],
@@ -3854,7 +4330,7 @@ class _EliteControlsOverlayState extends State<_EliteControlsOverlay> {
                     },
                     child: Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(color: Color(0xFFFF2D55), shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: Color(0xFFFF3B30), shape: BoxShape.circle),
                       child: Icon(
                         widget.controller.value.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                         color: Colors.white,
@@ -3884,29 +4360,64 @@ class _EliteControlsOverlayState extends State<_EliteControlsOverlay> {
   }
 }
 
-/// Optimized Tech-Grid Background with constant RepaintBoundary to eliminate rebuild overhead
-class TechGridBackground extends StatelessWidget {
-  const TechGridBackground({super.key});
+class SheetBorderPainter extends CustomPainter {
+  final Color fillColor;
+  final Color borderColor;
+  final double borderWidth;
+  final double borderRadius;
+
+  SheetBorderPainter({
+    required this.fillColor,
+    required this.borderColor,
+    required this.borderWidth,
+    required this.borderRadius,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 16,
-        ),
-        itemCount: 256, // Cap layout count to prevent infinite cell layouts
-        itemBuilder: (context, index) => Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.white.withOpacity(0.006),
-              width: 0.5,
-            ),
-          ),
-        ),
-      ),
+  void paint(Canvas canvas, Size size) {
+    final paintFill = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+
+    final paintBorder = Paint()
+      ..color = borderColor
+      ..strokeWidth = borderWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    
+    // Start at bottom-left corner
+    path.moveTo(0, size.height);
+    // Line up to the start of the top-left curve
+    path.lineTo(0, borderRadius);
+    // Curve to top-left
+    path.arcToPoint(
+      Offset(borderRadius, 0),
+      radius: Radius.circular(borderRadius),
+      clockwise: true,
     );
+    // Line to the start of the top-right curve
+    path.lineTo(size.width - borderRadius, 0);
+    // Curve to top-right
+    path.arcToPoint(
+      Offset(size.width, borderRadius),
+      radius: Radius.circular(borderRadius),
+      clockwise: true,
+    );
+    // Line down to bottom-right corner
+    path.lineTo(size.width, size.height);
+
+    // Draw the fill
+    final fillPath = Path.from(path);
+    fillPath.lineTo(0, size.height); // Go back to bottom-left
+    fillPath.close();
+    canvas.drawPath(fillPath, paintFill);
+
+    // Draw the top, left, right border
+    canvas.drawPath(path, paintBorder);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
