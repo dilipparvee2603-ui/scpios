@@ -12,14 +12,28 @@ cd "$(dirname "$0")"
 echo "[1/4] Resolving Flutter dependencies..."
 flutter pub get
 
-# 2. Build iOS Release Application
-echo "[2/4] Building iOS Release App (No Code Signing Required)..."
-flutter build ios --release --no-codesign
+# 2. Prepare iOS Config & CocoaPods
+echo "[2/4] Preparing iOS configuration..."
+flutter build ios --config-only --release
 
-# 3. Package IPA
-echo "[3/4] Packaging .ipa file..."
+# 3. Build with Xcode directly
+echo "[3/4] Building iOS Release App via Xcode..."
+cd ios
+xcodebuild -workspace Runner.xcworkspace \
+  -scheme Runner \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -derivedDataPath ../build/ios \
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_IDENTITY="" \
+  clean build
+cd ..
+
+# 4. Package IPA
+echo "[4/4] Packaging .ipa file..."
 mkdir -p build/ios/ipa/Payload
-cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+cp -r build/ios/Build/Products/Release-iphoneos/Runner.app build/ios/ipa/Payload/
 cd build/ios/ipa
 zip -r -q ScenePack-Pro.ipa Payload
 rm -rf Payload
