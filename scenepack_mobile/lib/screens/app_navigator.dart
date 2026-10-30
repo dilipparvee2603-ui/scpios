@@ -43,13 +43,13 @@ class AppNavigator extends StatelessWidget {
           state.setStatus("PICKER");
         } else if (state.status == "UPDATE") {
           state.setStatus("SETTINGS");
-        } else if (state.status == "ACCOUNT" || state.status == "SETTINGS") {
+        } else if (state.status == "SETTINGS") {
           state.setStatus("HOME");
         }
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF0D0F14),
-        appBar: (state.status == "HOME" || state.status == "UPDATE" || state.status == "ACCOUNT" || state.status == "SETTINGS") ? null : AppBar(
+        appBar: (state.status == "HOME" || state.status == "UPDATE" || state.status == "SETTINGS") ? null : AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: state.status == "UPDATE" ? null : IconButton(
@@ -107,7 +107,7 @@ class AppNavigator extends StatelessWidget {
             ),
           ],
         ),
-        bottomNavigationBar: (state.status == "HOME" || state.status == "ACCOUNT" || state.status == "SETTINGS" || state.status == "UPDATE")
+        bottomNavigationBar: (state.status == "HOME" || state.status == "SETTINGS" || state.status == "UPDATE")
             ? SafeArea(child: _buildMainBottomNavBar(context, state))
             : ((state.status == "CLIPS" || state.status == "REVIEW") ? SafeArea(child: _buildBottomBar(context, state)) : null),
       ),
@@ -118,8 +118,6 @@ class AppNavigator extends StatelessWidget {
     switch (state.status) {
       case "HOME":
         return _buildHome(context, state);
-      case "ACCOUNT":
-        return AccountPage(state: state);
       case "SETTINGS":
         return SettingsPage(state: state);
       case "PROCESSING":
@@ -184,8 +182,8 @@ class AppNavigator extends StatelessWidget {
                     icon: const Icon(Icons.help_outline_rounded, color: Colors.white24, size: 28),
                   ),
                   IconButton(
-                    onPressed: () => state.setStatus("ACCOUNT"),
-                    icon: const Icon(Icons.account_circle_outlined, color: Colors.white24, size: 32),
+                    onPressed: () => state.setStatus("SETTINGS"),
+                    icon: const Icon(Icons.settings_outlined, color: Colors.white24, size: 28),
                   ),
                 ],
               ),
@@ -219,9 +217,7 @@ class AppNavigator extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onLongPress: state.currentUser?.email == 'dilipkumar16398@gmail.com'
-                          ? () => _showDeveloperPanel(context, state)
-                          : null,
+                      onLongPress: () => _showDeveloperPanel(context, state),
                       child: _buildStatItem(
                         "LICENSE", 
                         state.isUnlimited ? "ELITE" : "STANDARD",
@@ -2727,12 +2723,6 @@ class AppNavigator extends StatelessWidget {
                   ),
                 ),
                 _buildNavBarItem(
-                  icon: Icons.person_rounded,
-                  label: "ACCOUNT",
-                  isActive: state.status == "ACCOUNT",
-                  onTap: () => state.setStatus("ACCOUNT"),
-                ),
-                _buildNavBarItem(
                   icon: Icons.settings_rounded,
                   label: "SETTINGS",
                   isActive: state.status == "SETTINGS" || state.status == "UPDATE",
@@ -2830,466 +2820,6 @@ class AppNavigator extends StatelessWidget {
 // -------------------------------------------------------------
 // New Top-Level Pages (formerly Modal Bottom Sheets / Slide-Ups)
 // -------------------------------------------------------------
-
-class AccountPage extends StatelessWidget {
-  final AppState state;
-  const AccountPage({super.key, required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    final hasPremium = state.isUnlimited;
-    final hasTrial = state.isTrialActive;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 20),
-          
-          // 1. Profile Card
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withOpacity(0.02)),
-            ),
-            child: Column(
-              children: [
-                // Circular Monogram Icon
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF38121E).withOpacity(0.3),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.3), width: 1.5),
-                  ),
-                  child: const Icon(
-                    Icons.person_outline_rounded,
-                    color: Color(0xFFFF3B30),
-                    size: 44,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Email
-                Text(
-                  state.currentUser?.email ?? "GUEST",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                // UID
-                Text(
-                  "UID: ${state.currentUser?.id ?? 'N/A'}",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.35),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                // Badge
-                if (hasPremium) ...[
-                  _buildBadge(
-                    text: "PREMIUM PASS",
-                    icon: Icons.bolt_rounded,
-                    bgColor: const Color(0xFF2C1E12),
-                    borderColor: const Color(0xFFE5A93C),
-                    textColor: const Color(0xFFE5A93C),
-                  ),
-                ] else if (hasTrial) ...[
-                  _buildBadge(
-                    text: "FREE TRIAL (${state.trialDaysRemaining}D LEFT)",
-                    bgColor: const Color(0xFF1C142A),
-                    borderColor: const Color(0xFFFF3B30),
-                    textColor: const Color(0xFFFF3B30),
-                  ),
-                ] else ...[
-                  _buildBadge(
-                    text: state.isTrialUsedOnAnotherEmail ? "TRIAL ALREADY USED" : "EXPIRED ACCESS",
-                    bgColor: state.isTrialUsedOnAnotherEmail ? const Color(0xFF2C1014) : const Color(0xFF1C1C1C),
-                    borderColor: state.isTrialUsedOnAnotherEmail ? const Color(0xFFFF3B30).withOpacity(0.5) : Colors.white24,
-                    textColor: state.isTrialUsedOnAnotherEmail ? const Color(0xFFFF3B30) : Colors.white38,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 2. Feature Status Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.02)),
-            ),
-            child: Row(
-              children: [
-                // Icon based on status
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: hasPremium 
-                        ? const Color(0xFF10B981).withOpacity(0.08) 
-                        : (hasTrial 
-                            ? Colors.blue.withOpacity(0.08) 
-                            : const Color(0xFFFF3B30).withOpacity(0.08)),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    hasPremium 
-                        ? Icons.check_circle_outline_rounded 
-                        : (hasTrial ? Icons.info_outline_rounded : Icons.lock_outline_rounded),
-                    color: hasPremium 
-                        ? const Color(0xFF10B981) 
-                        : (hasTrial ? Colors.blue : const Color(0xFFFF3B30)),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hasPremium 
-                            ? "Unlimited Workstation Access" 
-                            : (hasTrial 
-                                ? "Standard Trial Access" 
-                                : (state.isTrialUsedOnAnotherEmail 
-                                    ? "Trial Expired / Blocked" 
-                                    : "Restricted Access Mode")),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        hasPremium 
-                            ? "Enjoy unlimited cuts, lossless exports, and cloud backups."
-                            : (hasTrial 
-                                ? "${state.dailyScansUsed} of ${state.maxDailyScans} daily scans used today."
-                                : (state.isTrialUsedOnAnotherEmail
-                                    ? "Free trial already used on another email on this device. Upgrade to PRO to unlock."
-                                    : "Your trial has expired. Upgrade to PRO to resume unlimited cuts.")),
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.35),
-                          fontSize: 10,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── Upgrade CTA (trial / expired users only) ────
-          if (!hasPremium) GestureDetector(
-            onTap: () => launchUrl(Uri.parse("https://www.cfxstudios.in/scp-premium"), mode: LaunchMode.externalApplication),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF3B30).withOpacity(0.06),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.35), width: 1.2),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF3B30).withOpacity(0.12),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.25)),
-                    ),
-                    child: const Icon(Icons.bolt_rounded, color: Color(0xFFFF3B30), size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Upgrade to Premium",
-                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          hasTrial
-                              ? "Unlock unlimited scans, lossless export & cloud backup."
-                              : (state.isTrialUsedOnAnotherEmail
-                                  ? "Free trial already used on another email — upgrade now."
-                                  : "Your trial has expired — restore full access now."),
-                          style: const TextStyle(color: Colors.white38, fontSize: 10, height: 1.4),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF3B30),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      "GET PRO",
-                      style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.02)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: state.isDriveConnected 
-                        ? const Color(0xFF10B981).withOpacity(0.08) 
-                        : Colors.white.withOpacity(0.02),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    state.isDriveConnected ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
-                    color: state.isDriveConnected ? const Color(0xFF10B981) : Colors.white24,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Google Drive Backup",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        state.isDriveConnected 
-                            ? "Connected to Google Drive" 
-                            : "Backup is offline. Tap to connect.",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.35),
-                          fontSize: 10,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: state.isDriveConnected,
-                  onChanged: (v) => state.isDriveConnected ? state.disconnectDrive() : state.connectDrive(),
-                  activeThumbColor: const Color(0xFF10B981),
-                  activeTrackColor: const Color(0xFF10B981).withOpacity(0.2),
-                  inactiveThumbColor: Colors.white24,
-                  inactiveTrackColor: Colors.white.withOpacity(0.02),
-                ),
-              ],
-            ),
-          ),
-
-          if (state.isDriveConnected) ...[
-            const SizedBox(height: 16),
-            TextField(
-              onChanged: (v) => state.updateCloudFolderName(v),
-              controller: TextEditingController(text: state.cloudFolderName)..selection = TextSelection.collapsed(offset: state.cloudFolderName.length),
-              style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.015),
-                hintText: "CFX_SCP_SYNC",
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-                ),
-                prefixIcon: const Icon(Icons.folder_open_rounded, color: Color(0xFF10B981), size: 16),
-              ),
-            ),
-          ],
-
-          // 4. Device Deregistration (if premium)
-          if (hasPremium) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.02)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF3B30).withOpacity(0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.phonelink_erase_rounded,
-                      color: Color(0xFFFF3B30),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Device Unbinding",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Deregister this device to use license elsewhere.",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.35),
-                            fontSize: 10,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final success = await state.deregisterDevice();
-                      if (!context.mounted) return;
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("DEVICE DEREGISTERED SUCCESSFULLY"),
-                          backgroundColor: Color(0xFF10B981),
-                        ));
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("FAILED TO DEREGISTER DEVICE"),
-                          backgroundColor: Color(0xFFFF3B30),
-                        ));
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF3B30),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: const Color(0xFFFF3B30).withOpacity(0.2)),
-                      ),
-                    ),
-                    child: const Text("UNBIND", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 40),
-          
-          // 5. Sign Out Button
-          SizedBox(
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () => state.logout(),
-              icon: const Icon(Icons.exit_to_app_rounded, size: 18),
-              label: const Text("Sign Out", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5, fontSize: 14)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF3B30),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBadge({
-    required String text,
-    IconData? icon,
-    required Color bgColor,
-    required Color borderColor,
-    required Color textColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor, width: 1.2),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, color: textColor, size: 14),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            text,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class SettingsPage extends StatefulWidget {
   final AppState state;
@@ -3816,16 +3346,15 @@ class _SettingsPageState extends State<SettingsPage> {
               () => launchUrl(Uri.parse("https://cfxstudios.in//report-issue"), mode: LaunchMode.externalApplication),
               color: const Color(0xFFFFAA00),
             ),
-            if (state.currentUser?.email.toLowerCase() == 'dilipkumar16398@gmail.com')
-              _buildSettingsTile(
-                Icons.terminal_rounded,
-                "DEVELOPER LOGS",
-                "View app runtime logs, trace records, and errors",
-                () {
-                  _showDeveloperLogs(context);
-                },
-                color: Colors.white24,
-              ),
+            _buildSettingsTile(
+              Icons.terminal_rounded,
+              "DEVELOPER LOGS",
+              "View app runtime logs, trace records, and errors",
+              () {
+                _showDeveloperLogs(context);
+              },
+              color: Colors.white24,
+            ),
           ]),
           const SizedBox(height: 28),
 
@@ -3920,57 +3449,55 @@ class _SettingsPageState extends State<SettingsPage> {
           ]),
           const SizedBox(height: 28),
 
-          // ── Developer Tools (admin only) ─────────────────
-          if (state.currentUser?.email == 'dilipkumar16398@gmail.com') ...[
-            _buildSectionHeader("DEVELOPER TOOLS", Icons.terminal_rounded, const Color(0xFFFFAA00)),
-            const SizedBox(height: 12),
-            _buildSettingsCard([
-              _buildSettingsTile(
-                Icons.lock_reset_rounded,
-                "RESET ELITE ACCESS",
-                "Removes premium license status locally",
-                () async {
-                  await state.resetEliteAccess();
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("ELITE ACCESS RESET"),
-                    backgroundColor: Color(0xFFFF3B30),
-                  ));
-                },
-                color: const Color(0xFFFF3B30),
-              ),
-              _buildSettingsTile(
-                Icons.refresh_rounded,
-                "CLEAR DAILY USAGE",
-                "Resets today's scan usage count",
-                () async {
-                  await state.resetDailyUsage();
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("DAILY USAGE RESET"),
-                    backgroundColor: Color(0xFF10B981),
-                  ));
-                },
-                color: const Color(0xFF10B981),
-              ),
-              _buildSettingsTile(
-                Icons.power_settings_new_rounded,
-                "SYSTEM CACHE REBOOT",
-                "Clears all temporary application cache",
-                () async {
-                  final Directory tempDir = await getTemporaryDirectory();
-                  if (await tempDir.exists()) await tempDir.delete(recursive: true);
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("SYSTEM REBOOTED"),
-                    backgroundColor: Colors.blue,
-                  ));
-                },
-                color: Colors.blue,
-              ),
-            ]),
-            const SizedBox(height: 28),
-          ],
+          // ── Developer Tools ─────────────────────────────
+          _buildSectionHeader("DEVELOPER TOOLS", Icons.terminal_rounded, const Color(0xFFFFAA00)),
+          const SizedBox(height: 12),
+          _buildSettingsCard([
+            _buildSettingsTile(
+              Icons.lock_reset_rounded,
+              "RESET ELITE ACCESS",
+              "Removes premium license status locally",
+              () async {
+                await state.resetEliteAccess();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("ELITE ACCESS RESET"),
+                  backgroundColor: Color(0xFFFF3B30),
+                ));
+              },
+              color: const Color(0xFFFF3B30),
+            ),
+            _buildSettingsTile(
+              Icons.refresh_rounded,
+              "CLEAR DAILY USAGE",
+              "Resets today's scan usage count",
+              () async {
+                await state.resetDailyUsage();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("DAILY USAGE RESET"),
+                  backgroundColor: Color(0xFF10B981),
+                ));
+              },
+              color: const Color(0xFF10B981),
+            ),
+            _buildSettingsTile(
+              Icons.power_settings_new_rounded,
+              "SYSTEM CACHE REBOOT",
+              "Clears all temporary application cache",
+              () async {
+                final Directory tempDir = await getTemporaryDirectory();
+                if (await tempDir.exists()) await tempDir.delete(recursive: true);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("SYSTEM REBOOTED"),
+                  backgroundColor: Colors.blue,
+                ));
+              },
+              color: Colors.blue,
+            ),
+          ]),
+          const SizedBox(height: 28),
 
           // ── Footer ───────────────────────────────────────
           Center(
