@@ -9,6 +9,7 @@ import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
+import '../logic/project_manager.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -278,6 +279,8 @@ class AppNavigator extends StatelessWidget {
             title: "FRAME EXPORTER", desc: "Lossless frame sequence extraction", icon: Icons.layers_outlined,
             mode: "FRAME_PACK"
           ),
+          const SizedBox(height: 36),
+          _buildRecentProjectsSection(context, state),
           const SizedBox(height: 40),
 
         ],
@@ -1242,6 +1245,22 @@ class AppNavigator extends StatelessWidget {
                 style: const TextStyle(color: Colors.grey, fontSize: 14)),
             const SizedBox(height: 40),
             _PickerButton(onVideoSelected: (path) => state.setVideo(path)),
+            if (state.projects.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              TextButton.icon(
+                onPressed: () => state.setStatus("HOME"),
+                icon: const Icon(Icons.history_rounded, size: 16, color: Color(0xFFFF3B30)),
+                label: Text(
+                  "VIEW RECENT PROJECTS (${state.projects.length})",
+                  style: const TextStyle(
+                    color: Color(0xFFFF3B30),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -2815,6 +2834,318 @@ class AppNavigator extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildRecentProjectsSection(BuildContext context, AppState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.history_rounded, size: 14, color: Color(0xFFFF3B30)),
+                const SizedBox(width: 8),
+                const Text(
+                  "RECENT PROJECTS",
+                  style: TextStyle(
+                    color: Color(0xFF7F8792),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                  ),
+                ),
+                if (state.projects.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF3B30).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "${state.projects.length}",
+                      style: const TextStyle(
+                        color: Color(0xFFFF3B30),
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (state.projects.isNotEmpty)
+              Text(
+                "AUTO-SAVED",
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (state.projects.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF13161C),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.video_library_outlined, size: 32, color: Colors.white.withValues(alpha: 0.2)),
+                const SizedBox(height: 10),
+                const Text(
+                  "NO SAVED PROJECTS YET",
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Import any video in Scene Finder to automatically save and resume your cuts anytime.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    fontSize: 11,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: state.projects.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final project = state.projects[index];
+              return _buildProjectCard(context, state, project);
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildProjectCard(BuildContext context, AppState state, ScenePackProject project) {
+    final hasThumbnail = project.thumbnailPath != null &&
+        File(project.thumbnailPath!).existsSync();
+    final bool isFramePack = project.toolMode == "FRAME_PACK";
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF13161C),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: (state.currentProject?.id == project.id)
+              ? const Color(0xFFFF3B30).withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => state.openProject(project),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 80,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D0F14),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (hasThumbnail)
+                        Image.file(
+                          File(project.thumbnailPath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.movie_rounded, color: Colors.white24, size: 24),
+                          ),
+                        )
+                      else
+                        const Center(
+                          child: Icon(Icons.movie_rounded, color: Colors.white24, size: 24),
+                        ),
+                      if (project.duration > 0)
+                        Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.75),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              "${project.duration.toStringAsFixed(1)}s",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        project.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          _buildMiniBadge(
+                            isFramePack ? "FRAME PACK" : "SCENE FINDER",
+                            isFramePack ? Colors.orangeAccent : const Color(0xFFFF3B30),
+                          ),
+                          _buildMiniBadge(
+                            project.scenes.isNotEmpty
+                                ? "${project.scenes.length} CUTS"
+                                : "READY",
+                            Colors.blueAccent,
+                          ),
+                          Text(
+                            _formatProjectDate(project.lastModified),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.white38),
+                  tooltip: "Delete Project",
+                  onPressed: () => _confirmDeleteProject(context, state, project),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.white24,
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.5),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 8.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  String _formatProjectDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return "Just now";
+    if (diff.inHours < 1) return "${diff.inMinutes}m ago";
+    if (diff.inDays < 1) return "${diff.inHours}h ago";
+    if (diff.inDays < 7) return "${diff.inDays}d ago";
+    return "${dt.month}/${dt.day}/${dt.year}";
+  }
+
+  void _confirmDeleteProject(BuildContext context, AppState state, ScenePackProject project) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161824),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Color(0xFFFF3B30), size: 22),
+            SizedBox(width: 10),
+            Text(
+              "DELETE PROJECT",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to delete '${project.title}'\nThis will remove the project cuts and saved session data.",
+          style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("CANCEL", style: TextStyle(color: Colors.white38, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF3B30),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await state.deleteProject(project.id);
+            },
+            child: const Text("DELETE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // -------------------------------------------------------------
@@ -3000,7 +3331,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
         content: Text(
-          "This will purge ${state.cacheSizeFormatted} of temporary cached videos, thumbnails, and preview sessions to free up phone storage.\n\nClips already saved to your Photos album or Files will not be affected.",
+          "This will purge ${state.cacheSizeFormatted} of temporary cached videos, thumbnails, saved projects, and preview sessions to free up phone storage.\n\nClips already saved to your Photos album or Files will not be affected.",
           style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
         ),
         actions: [
